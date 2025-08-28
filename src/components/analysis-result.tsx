@@ -9,6 +9,7 @@ import {
   FileWarning,
   MessageCircleWarning,
   Link2Off,
+  Info,
 } from "lucide-react";
 import {
   Card,
@@ -41,6 +42,7 @@ export type AnalysisResultData = {
   confidenceScore?: number;
   threatTypes?: string[];
   inputValue: string;
+  explanation?: string;
 };
 
 interface AnalysisResultProps {
@@ -88,8 +90,6 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const isFraud = result.isFraudulent === true || (result.isSafe === false && (result.threatTypes?.length ?? 0) > 0);
   const confidence = result.confidenceScore ?? 0;
   
-  // If it's not fraud, the score represents confidence in it being safe.
-  // So, fraud confidence is 1 minus safe confidence.
   const fraudConfidence = isFraud ? confidence : 1 - confidence;
   const fraudConfidencePercentage = Math.round(fraudConfidence * 100);
 
@@ -144,6 +144,23 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
             />
           </div>
         )}
+
+        {result.type === "text" && result.explanation && (
+           <Card className="bg-muted/50">
+           <CardHeader>
+             <CardTitle className="flex items-center text-base font-medium">
+                <Info className="mr-2 h-5 w-5 text-primary" />
+                AI Explanation
+             </CardTitle>
+           </CardHeader>
+           <CardContent>
+             <p className="text-sm text-muted-foreground">
+                {result.explanation}
+             </p>
+           </CardContent>
+         </Card>
+        )}
+
         {result.type === "url" && result.threatTypes && result.threatTypes.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium">Detected Threats:</h4>
