@@ -42,21 +42,20 @@ const analyzeImageForFraudFlow = ai.defineFlow(
   async input => {
     const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
     const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
-    const url = `https://api.cogniflow.ai/v1/models/${cogniflowModelId}/predict`;
+    const url = `https://predict.cogniflow.ai/image/llm-classification/predict/${cogniflowModelId}`;
 
-    // The data URI needs to be stripped of its prefix `data:image/...;base64,`
     const base64Image = input.photoDataUri.split(',')[1];
-    const mimeType = input.photoDataUri.match(/data:(image\/\w+);base64,/)?.[1];
-    const imageFormat = mimeType?.split('/')[1] || 'jpeg';
+    const mimeType = input.photoDataUri.match(/data:(image\/(\w+));base64,/)?.[2];
+    const imageFormat = mimeType || 'jpeg';
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${cogniflowApiKey}`,
+        'x-api-key': cogniflowApiKey,
       },
       body: JSON.stringify({
-        input_image: base64Image,
+        base64_image: base64Image,
         format: imageFormat,
       }),
     });
@@ -78,4 +77,3 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     };
   }
 );
-
