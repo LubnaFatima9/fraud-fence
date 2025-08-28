@@ -34,19 +34,30 @@ export async function analyzeImageForFraud(input: AnalyzeImageForFraudInput): Pr
   return analyzeImageForFraudFlow(input);
 }
 
-const fraudImageAnalysisPrompt = ai.definePrompt({
-  name: 'fraudImageAnalysisPrompt',
-  input: { schema: AnalyzeImageForFraudInputSchema },
-  output: { schema: AnalyzeImageForFraudOutputSchema },
-  prompt: `You are a fraud detection expert specializing in image analysis. Analyze the following image for scam indicators.
+const fraudImageExplanationPrompt = ai.definePrompt({
+  name: 'fraudImageExplanationPrompt',
+  input: { schema: z.object({
+      photoDataUri: AnalyzeImageForFraudInputSchema.shape.photoDataUri,
+      isFraudulent: z.boolean(),
+      confidenceScore: z.number(),
+  }) },
+  output: { schema: z.object({
+    explanation: AnalyzeImageForFraudOutputSchema.shape.explanation,
+  }) },
+  prompt: `You are a fraud detection expert specializing in image analysis.
+  Another AI model has already analyzed an image and made a determination. Your task is to provide a user-friendly explanation for this verdict.
 
   Image to analyze:
   {{media url=photoDataUri}}
 
-  Based on your visual analysis, determine if the image is likely part of a scam. Your response must be in JSON format and include:
-  1.  'isFraudulent': A boolean (true/false).
-  2.  'confidenceScore': A number between 0 and 1 representing your confidence in the fraud assessment.
-  3.  'explanation': A concise, user-friendly explanation for your decision. If it is fraudulent, highlight indicators like poorly edited text, fake logos, suspicious QR codes, unbelievable offers, or pressure tactics. If it is safe, briefly state why.
+  The verdict from the other model is:
+  - Is Fraudulent: {{{isFraudulent}}}
+  - Confidence Score: {{{confidenceScore}}}
+
+  Based on the provided verdict and your own visual analysis, generate a concise explanation.
+  - If it was deemed fraudulent, highlight potential indicators like poorly edited text, fake logos, suspicious QR codes, unbelievable offers, or pressure tactics.
+  - If it was deemed safe, briefly state why it appears legitimate.
+  Your response must be in JSON format and contain only the 'explanation' field.
   `,
 });
 
@@ -80,16 +91,11 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     });
 
     if (!response.ok) {
-        const { output } = await fraudImageAnalysisPrompt(input);
-        if (!output) {
-            throw new Error("GenAI analysis failed to provide an explanation.");
-        }
-        return output;
+        throw new Error(`Cogniflow API request failed with status: ${response.status}`);
     }
 
     const result = await response.json();
     
-    // Defensive check
     const primaryPrediction = result.result?.find((r: any) => r.match === true);
 
     const isFraudulent = primaryPrediction
@@ -99,12 +105,16 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     const confidenceScore = primaryPrediction?.score ?? 0;
     
     // Now, use a generative model to explain *why*.
-    const { output } = await fraudImageAnalysisPrompt(input);
+    const { output } = await fraudImageExplanationPrompt({
+        ...input,
+        isFraudulent,
+        confidenceScore
+    });
     if (!output) {
         throw new Error("GenAI analysis failed to provide an explanation.");
     }
 
-    // Combine the results, using the specialized model's verdict but the generative model's explanation.
+    // Combine the results, using the specialized model's verdict and the generative model's explanation.
     return {
       isFraudulent,
       confidenceScore,
