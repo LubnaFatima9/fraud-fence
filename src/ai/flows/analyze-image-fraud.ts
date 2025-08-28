@@ -68,14 +68,14 @@ const analyzeImageForFraudFlow = ai.defineFlow(
 
     const result = await response.json();
     
-    // Defensive check to avoid crashes if predictions is empty
-    const primaryPrediction = result.predictions?.[0];
+    // Defensive check
+    const primaryPrediction = result.result?.find((r: any) => r.match === true);
 
     const isFraudulent = primaryPrediction
-      ? primaryPrediction.label.toLowerCase() === 'fraud'
+      ? primaryPrediction.name.toLowerCase() === 'scam'
       : false;
 
-    const confidenceScore = primaryPrediction?.confidence ?? 0;
+    const confidenceScore = primaryPrediction?.score ?? 0;
 
     return {
       isFraudulent,
