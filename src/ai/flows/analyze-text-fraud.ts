@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for analyzing text to detect potential fraud and provide an explanation.
+ * @fileOverview This file defines a Genkit flow for analyzing text to detect potential fraud and provide an explanation in multiple languages.
  *
  * - analyzeTextForFraud - The function to call to analyze text for fraud.
  * - AnalyzeTextForFraudInput - The input type for the analyzeTextForFraud function.
@@ -32,7 +32,7 @@ export async function analyzeTextForFraud(input: AnalyzeTextForFraudInput): Prom
 
 const fraudAnalysisPrompt = ai.definePrompt({
     name: 'fraudAnalysisPrompt',
-    input: { schema: AnalyzeTextForFraudInputSchema },
+    input: { schema: z.object({ text: z.string() }) },
     output: { schema: AnalyzeTextForFraudOutputSchema },
     prompt: `You are a fraud detection expert. Analyze the following text for scam indicators.
 
@@ -44,7 +44,28 @@ const fraudAnalysisPrompt = ai.definePrompt({
     Based on your analysis, determine if the text is fraudulent. Your response must be in JSON format and include:
     1.  'isFraudulent': A boolean (true/false).
     2.  'confidenceScore': A number between 0 and 1 representing your confidence in the fraud assessment.
-    3.  'explanation': A concise, user-friendly explanation for your decision. If it is fraudulent, highlight indicators like forced urgency, suspicious links, requests for money, or poor grammar. If it is safe, briefly state why.
+    3.  'explanation': A concise, user-friendly explanation in English for your decision. If it is fraudulent, highlight indicators like forced urgency, suspicious links, requests for money, or poor grammar. If it is safe, briefly state why.
+    `,
+});
+
+const detectLanguagePrompt = ai.definePrompt({
+    name: 'detectLanguagePrompt',
+    input: { schema: z.object({ text: z.string() }) },
+    output: { schema: z.object({ language: z.string().describe("The detected language code (e.g., 'en', 'es', 'hi').") }) },
+    prompt: `Detect the language of the following text. Respond with only the two-letter ISO 639-1 language code (e.g., 'en' for English, 'es' for Spanish, 'hi' for Hindi).
+
+    Text: """{{{text}}}"""
+    `,
+});
+
+const translateTextPrompt = ai.definePrompt({
+    name: 'translateTextPrompt',
+    input: { schema: z.object({ text: z.string(), targetLanguage: z.string(), sourceLanguage: z.string().optional() }) },
+    output: { schema: z.object({ translatedText: z.string() }) },
+    prompt: `Translate the following text to {{{targetLanguage}}}.
+    {{#if sourceLanguage}}The source language is {{{sourceLanguage}}}.{{/if}}
+
+    Text: """{{{text}}}"""
     `,
 });
 
@@ -56,10 +77,30 @@ const analyzeTextForFraudFlow = ai.defineFlow(
     outputSchema: AnalyzeTextForFraudOutputSchema,
   },
   async input => {
-    // First, get the basic fraud detection from the specialized Cogniflow model.
+    // 1. Detect the language
+    const { output: langOutput } = await detectLanguagePrompt({ text: input.text });
+    const sourceLanguage = langOutput?.language || 'en';
+
+    let textToAnalyze = input.text;
+
+    // 2. Translate to English if necessary
+    if (sourceLanguage !== 'en') {
+        const { output: translationOutput } = await translateTextPrompt({
+            text: input.text,
+            targetLanguage: 'English',
+            sourceLanguage,
+        });
+        if (translationOutput?.translatedText) {
+            textToAnalyze = translationOutput.translatedText;
+        }
+    }
+    
+    // 3. Analyze the (now English) text for fraud using the specialized model
     const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
     const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
     const url = `https://predict.cogniflow.ai/text/classification/predict/${cogniflowModelId}`;
+
+    let isFraudulent, confidenceScore, explanation;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -69,35 +110,45 @@ const analyzeTextForFraudFlow = ai.defineFlow(
         'x-api-key': cogniflowApiKey,
       },
       body: JSON.stringify({
-        text: input.text,
+        text: textToAnalyze,
       }),
     });
 
     if (!response.ok) {
-        const { output } = await fraudAnalysisPrompt(input);
+        // Fallback to pure GenAI analysis if Cogniflow fails
+        const { output } = await fraudAnalysisPrompt({ text: textToAnalyze });
         if (!output) {
-            throw new Error("GenAI analysis failed to provide an explanation.");
+            throw new Error("GenAI analysis failed to provide a response.");
         }
-        return output;
+        ({ isFraudulent, confidenceScore, explanation } = output);
+    } else {
+        const result = await response.json();
+        isFraudulent = result.result.toLowerCase() === 'fraud';
+        confidenceScore = result.confidence_score;
+
+        // Get the generative explanation based on the original text
+        const { output: explanationOutput } = await fraudAnalysisPrompt({ text: textToAnalyze });
+        explanation = explanationOutput?.explanation || "Could not generate an explanation.";
     }
 
-    const result = await response.json();
-
-    const predictionLabel = result.result;
-    const confidenceScore = result.confidence_score;
-    const isFraudulent = predictionLabel.toLowerCase() === 'fraud';
-
-    // Now, use a generative model to explain *why*.
-    const { output } = await fraudAnalysisPrompt(input);
-    if (!output) {
-        throw new Error("GenAI analysis failed to provide an explanation.");
+    // 4. Translate the explanation back to the source language if necessary
+    let finalExplanation = explanation;
+    if (sourceLanguage !== 'en') {
+        const { output: finalTranslationOutput } = await translateTextPrompt({
+            text: explanation,
+            targetLanguage: sourceLanguage,
+            sourceLanguage: 'en',
+        });
+        if (finalTranslationOutput?.translatedText) {
+            finalExplanation = finalTranslationOutput.translatedText;
+        }
     }
 
-    // Combine the results, using the specialized model's verdict but the generative model's explanation.
+    // 5. Return the final result
     return {
       isFraudulent,
       confidenceScore,
-      explanation: output.explanation,
+      explanation: finalExplanation,
     };
   }
 );
