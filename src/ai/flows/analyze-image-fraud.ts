@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -45,6 +46,8 @@ const analyzeImageForFraudFlow = ai.defineFlow(
 
     // The data URI needs to be stripped of its prefix `data:image/...;base64,`
     const base64Image = input.photoDataUri.split(',')[1];
+    const mimeType = input.photoDataUri.match(/data:(image\/\w+);base64,/)?.[1];
+    const imageFormat = mimeType?.split('/')[1] || 'jpeg';
 
     const response = await fetch(url, {
       method: 'POST',
@@ -54,6 +57,7 @@ const analyzeImageForFraudFlow = ai.defineFlow(
       },
       body: JSON.stringify({
         input_image: base64Image,
+        format: imageFormat,
       }),
     });
 
@@ -74,3 +78,4 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     };
   }
 );
+
