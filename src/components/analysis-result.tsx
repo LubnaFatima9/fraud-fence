@@ -86,8 +86,12 @@ const ResultTitle: FC<{ result: AnalysisResultData }> = ({ result }) => {
 export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const { toast } = useToast();
   const isFraud = result.isFraudulent === true || (result.isSafe === false && (result.threatTypes?.length ?? 0) > 0);
-  const confidence = result.confidenceScore ?? (isFraud ? 1 : 0);
-  const confidencePercentage = Math.round(confidence * 100);
+  const confidence = result.confidenceScore ?? 0;
+  
+  // If it's not fraud, the score represents confidence in it being safe.
+  // So, fraud confidence is 1 minus safe confidence.
+  const fraudConfidence = isFraud ? confidence : 1 - confidence;
+  const fraudConfidencePercentage = Math.round(fraudConfidence * 100);
 
   const handleReport = () => {
     toast({
@@ -125,16 +129,16 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm font-medium">
               <span>Fraud Confidence</span>
-              <span style={{ color: getConfidenceColor(confidence) }}>
-                {confidencePercentage}%
+              <span style={{ color: getConfidenceColor(fraudConfidence) }}>
+                {fraudConfidencePercentage}%
               </span>
             </div>
             <Progress
-              value={confidencePercentage}
+              value={fraudConfidencePercentage}
               className="h-2 [&>div]:bg-[--confidence-color]"
               style={
                 {
-                  "--confidence-color": getConfidenceColor(confidence),
+                  "--confidence-color": getConfidenceColor(fraudConfidence),
                 } as React.CSSProperties
               }
             />
@@ -196,4 +200,3 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
     </Card>
   );
 };
-    
