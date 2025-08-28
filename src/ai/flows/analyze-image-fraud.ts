@@ -44,8 +44,8 @@ Based on your analysis, determine if the image is fraudulent and provide a confi
 Set the isFraudulent output field to true if it is fraudulent, and false otherwise. Provide a confidence score between 0 and 1.
 
 Ensure the output adheres strictly to the AnalyzeImageForFraudOutputSchema schema and provide it with a description.`, // prettier-ignore
+  model: 'googleai/gemini-pro-vision',
   config: {
-    model: 'googleai/gemini-2.5-flash',
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
