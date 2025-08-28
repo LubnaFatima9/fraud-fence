@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { reportFraud } from "@/ai/flows/report-fraud";
 
 export type AnalysisResultData = {
   type: "text" | "image" | "url";
@@ -91,13 +92,24 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const confidence = result.confidenceScore ?? 0;
   
   const fraudConfidence = isFraud ? confidence : 1 - confidence;
-  const fraudConfidencePercentage = Math.round(fraudConfidence * 100);
+  const fraudConfidencePercentage = Math.round((isFraud ? confidence : (1-confidence)) * 100);
 
-  const handleReport = () => {
-    toast({
-      title: "Report Submitted",
-      description: "Thank you for helping keep the web safe.",
-    });
+
+  const handleReport = async () => {
+    try {
+      await reportFraud({ type: result.type, content: result.inputValue });
+      toast({
+        title: "Report Submitted",
+        description: "Thank you for helping keep the web safe.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Report Failed",
+        description: "Could not submit your report. Please try again.",
+      });
+      console.error("Report error:", error);
+    }
   };
 
   const renderIcon = () => {
