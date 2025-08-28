@@ -24,6 +24,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -172,6 +173,9 @@ export function FraudAnalyzer() {
                       <FormControl>
                         <Textarea placeholder="Paste suspicious text here..." className="min-h-[150px]" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        You can paste text in English, Hindi, or Spanish.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -234,4 +238,3 @@ export function FraudAnalyzer() {
     </Card>
   );
 }
-    
