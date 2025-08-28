@@ -145,7 +145,7 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
           </div>
         )}
 
-        {result.type === "text" && result.explanation && (
+        {(result.type === "text" || result.type === "image") && result.explanation && (
            <Card className="bg-muted/50">
            <CardHeader>
              <CardTitle className="flex items-center text-base font-medium">

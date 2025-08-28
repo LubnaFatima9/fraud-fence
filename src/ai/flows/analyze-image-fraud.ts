@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview Flow for analyzing images for fraud using the Cogniflow AI model.
+ * @fileOverview Flow for analyzing images for fraud using the Cogniflow AI model and providing a GenAI explanation.
  *
  * - analyzeImageForFraud - Analyzes an image for potential fraud.
  * - AnalyzeImageForFraudInput - The input type for the analyzeImageForFraud function.
@@ -26,12 +26,30 @@ const AnalyzeImageForFraudOutputSchema = z.object({
     .boolean()
     .describe('Whether the image is determined to be fraudulent or not.'),
   confidenceScore: z.number().describe('The confidence score of the fraud detection.'),
+  explanation: z.string().describe('An explanation of why the image is considered fraudulent or safe, highlighting specific indicators.'),
 });
 export type AnalyzeImageForFraudOutput = z.infer<typeof AnalyzeImageForFraudOutputSchema>;
 
 export async function analyzeImageForFraud(input: AnalyzeImageForFraudInput): Promise<AnalyzeImageForFraudOutput> {
   return analyzeImageForFraudFlow(input);
 }
+
+const fraudImageAnalysisPrompt = ai.definePrompt({
+  name: 'fraudImageAnalysisPrompt',
+  input: { schema: AnalyzeImageForFraudInputSchema },
+  output: { schema: AnalyzeImageForFraudOutputSchema },
+  prompt: `You are a fraud detection expert specializing in image analysis. Analyze the following image for scam indicators.
+
+  Image to analyze:
+  {{media url=photoDataUri}}
+
+  Based on your visual analysis, determine if the image is likely part of a scam. Your response must be in JSON format and include:
+  1.  'isFraudulent': A boolean (true/false).
+  2.  'confidenceScore': A number between 0 and 1 representing your confidence in the fraud assessment.
+  3.  'explanation': A concise, user-friendly explanation for your decision. If it is fraudulent, highlight indicators like poorly edited text, fake logos, suspicious QR codes, unbelievable offers, or pressure tactics. If it is safe, briefly state why.
+  `,
+});
+
 
 const analyzeImageForFraudFlow = ai.defineFlow(
   {
@@ -62,8 +80,11 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`Cogniflow API request failed with status ${response.status}: ${errorBody}`);
+        const { output } = await fraudImageAnalysisPrompt(input);
+        if (!output) {
+            throw new Error("GenAI analysis failed to provide an explanation.");
+        }
+        return output;
     }
 
     const result = await response.json();
@@ -76,10 +97,18 @@ const analyzeImageForFraudFlow = ai.defineFlow(
       : false;
 
     const confidenceScore = primaryPrediction?.score ?? 0;
+    
+    // Now, use a generative model to explain *why*.
+    const { output } = await fraudImageAnalysisPrompt(input);
+    if (!output) {
+        throw new Error("GenAI analysis failed to provide an explanation.");
+    }
 
+    // Combine the results, using the specialized model's verdict but the generative model's explanation.
     return {
       isFraudulent,
       confidenceScore,
+      explanation: output.explanation,
     };
   }
 );
