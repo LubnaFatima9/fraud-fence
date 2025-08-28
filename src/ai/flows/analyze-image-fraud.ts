@@ -32,41 +32,6 @@ export async function analyzeImageForFraud(input: AnalyzeImageForFraudInput): Pr
   return analyzeImageForFraudFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'analyzeImageForFraudPrompt',
-  input: {schema: AnalyzeImageForFraudInputSchema},
-  output: {schema: AnalyzeImageForFraudOutputSchema},
-  prompt: `You are an AI fraud detection expert. Analyze the image provided to determine if it is fraudulent.
-
-Image: {{media url=photoDataUri}}
-
-Based on your analysis, determine if the image is fraudulent and provide a confidence score.
-Set the isFraudulent output field to true if it is fraudulent, and false otherwise. Provide a confidence score between 0 and 1.
-
-Ensure the output adheres strictly to the AnalyzeImageForFraudOutputSchema schema and provide it with a description.`, // prettier-ignore
-  model: 'googleai/gemini-pro-vision',
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_ONLY_HIGH',
-      },
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_LOW_AND_ABOVE',
-      },
-    ],
-  },
-});
-
 const analyzeImageForFraudFlow = ai.defineFlow(
   {
     name: 'analyzeImageForFraudFlow',
@@ -74,14 +39,33 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     outputSchema: AnalyzeImageForFraudOutputSchema,
   },
   async input => {
-    // Call the Cogniflow API here using the provided API key and model number
-    // Replace this with the actual API call
-    // const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
-    // const cogniflowModelNumber = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
-    // const cogniflowResponse = await cogniflowApiCall(input.photoDataUri, cogniflowApiKey, cogniflowModelNumber);
+    const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
+    const cogniflowModelId = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
+    const url = `https://api.cogniflow.ai/v2/models/${cogniflowModelId}/predict`;
 
-    // Simulate the Cogniflow API response for now
-    const {output} = await prompt(input);
-    return output!;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'API-Key': cogniflowApiKey,
+      },
+      body: JSON.stringify({
+        image_url: input.photoDataUri,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Cogniflow API request failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    const isFraudulent = result.prediction.toLowerCase() === 'fraud';
+    const confidenceScore = result.confidence_score;
+
+    return {
+      isFraudulent,
+      confidenceScore,
+    };
   }
 );
