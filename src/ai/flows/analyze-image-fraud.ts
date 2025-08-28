@@ -41,27 +41,32 @@ const analyzeImageForFraudFlow = ai.defineFlow(
   async input => {
     const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
     const cogniflowModelId = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
-    const url = `https://api.cogniflow.ai/v2/deployments/${cogniflowModelId}/predict`;
+    const url = `https://api.cogniflow.ai/v1/models/${cogniflowModelId}/predict`;
+
+    // The data URI needs to be stripped of its prefix `data:image/...;base64,`
+    const base64Image = input.photoDataUri.split(',')[1];
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `API-KEY ${cogniflowApiKey}`,
+        Authorization: `Bearer ${cogniflowApiKey}`,
       },
       body: JSON.stringify({
-        image_url: input.photoDataUri,
+        input_image: base64Image,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Cogniflow API request failed with status ${response.status}`);
+      const errorBody = await response.text();
+      throw new Error(`Cogniflow API request failed with status ${response.status}: ${errorBody}`);
     }
 
     const result = await response.json();
-    
-    const isFraudulent = result.prediction.toLowerCase() === 'fraud';
-    const confidenceScore = result.confidence_score;
+
+    const primaryPrediction = result.predictions[0];
+    const isFraudulent = primaryPrediction.label.toLowerCase() === 'fraud';
+    const confidenceScore = primaryPrediction.confidence;
 
     return {
       isFraudulent,

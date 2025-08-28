@@ -37,27 +37,29 @@ const analyzeTextForFraudFlow = ai.defineFlow(
   async input => {
     const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
     const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
-    const url = `https://api.cogniflow.ai/v2/deployments/${cogniflowModelId}/predict`;
+    const url = `https://api.cogniflow.ai/v1/models/${cogniflowModelId}/predict`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `API-KEY ${cogniflowApiKey}`,
+        Authorization: `Bearer ${cogniflowApiKey}`,
       },
       body: JSON.stringify({
-        text: input.text,
+        input_text: input.text,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Cogniflow API request failed with status ${response.status}`);
+      const errorBody = await response.text();
+      throw new Error(`Cogniflow API request failed with status ${response.status}: ${errorBody}`);
     }
 
     const result = await response.json();
-    
-    const isFraudulent = result.prediction.toLowerCase() === 'fraud';
-    const confidenceScore = result.confidence_score;
+
+    const primaryPrediction = result.predictions[0];
+    const isFraudulent = primaryPrediction.label.toLowerCase() === 'fraud';
+    const confidenceScore = primaryPrediction.confidence;
 
     return {
       isFraudulent,
