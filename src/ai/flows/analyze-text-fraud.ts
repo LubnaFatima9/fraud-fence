@@ -37,7 +37,7 @@ const analyzeTextForFraudFlow = ai.defineFlow(
   },
   async input => {
     const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
-    const cogniflowModelId = 'b7562ba0-a75d-4001-9375-1f06f22e0b13';
+    const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
     const url = `https://predict.cogniflow.ai/text/classification/predict/${cogniflowModelId}`;
 
     const response = await fetch(url, {
