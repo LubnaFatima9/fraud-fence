@@ -68,7 +68,7 @@ const analyzeImageForFraudFlow = ai.defineFlow(
 
     const result = await response.json();
     
-    const isFraudulent = result.result?.toLowerCase() === 'fraud';
+    const isFraudulent = result.result?.label?.toLowerCase() === 'fraud';
     const confidenceScore = result.confidence_score;
 
     return {
