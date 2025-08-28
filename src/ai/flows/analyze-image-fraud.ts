@@ -68,10 +68,8 @@ const analyzeImageForFraudFlow = ai.defineFlow(
 
     const result = await response.json();
     
-    // The image analysis response has a `predictions` array.
-    const primaryPrediction = result.predictions[0];
-    const isFraudulent = primaryPrediction.label.toLowerCase() === 'fraud';
-    const confidenceScore = primaryPrediction.confidence;
+    const isFraudulent = result.result?.toLowerCase() === 'fraud';
+    const confidenceScore = result.confidence_score;
 
     return {
       isFraudulent,
