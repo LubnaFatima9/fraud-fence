@@ -36,18 +36,19 @@ const analyzeTextForFraudFlow = ai.defineFlow(
     outputSchema: AnalyzeTextForFraudOutputSchema,
   },
   async input => {
-    const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
-    const cogniflowModelId = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
-    const url = `https://api.cogniflow.ai/v1/models/${cogniflowModelId}/predict`;
+    const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
+    const cogniflowModelId = 'b7562ba0-a75d-4001-9375-1f06f22e0b13';
+    const url = `https://predict.cogniflow.ai/text/classification/predict/${cogniflowModelId}`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
+        'accept': 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${cogniflowApiKey}`,
+        'x-api-key': cogniflowApiKey,
       },
       body: JSON.stringify({
-        input_text: input.text,
+        text: input.text,
       }),
     });
 
