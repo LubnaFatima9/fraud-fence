@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { reportFraud } from "@/ai/flows/report-fraud";
+import { reportFraud, type ReportFraudInput } from "@/ai/flows/report-fraud";
 
 export type AnalysisResultData = {
   type: "text" | "image" | "url";
@@ -92,7 +92,7 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const confidence = result.confidenceScore ?? 0;
   
   const fraudConfidence = isFraud ? confidence : 1 - confidence;
-  const fraudConfidencePercentage = Math.round((isFraud ? confidence : (1-confidence)) * 100);
+  const fraudConfidencePercentage = Math.round(fraudConfidence * 100);
 
 
   const handleReport = async () => {
@@ -157,7 +157,7 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
           </div>
         )}
 
-        {(result.type === "text" || result.type === "image") && result.explanation && (
+        {result.explanation && (
            <Card className="bg-muted/50">
            <CardHeader>
              <CardTitle className="flex items-center text-base font-medium">
