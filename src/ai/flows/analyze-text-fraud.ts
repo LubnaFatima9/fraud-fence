@@ -37,7 +37,7 @@ const analyzeTextForFraudFlow = ai.defineFlow(
   async input => {
     const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
     const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
-    const url = `https://api.cogniflow.ai/v2/models/${cogniflowModelId}/predict`;
+    const url = `https://api.cogniflow.ai/v2/deployment/predict`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -46,6 +46,7 @@ const analyzeTextForFraudFlow = ai.defineFlow(
         'API-Key': cogniflowApiKey,
       },
       body: JSON.stringify({
+        deployment_id: cogniflowModelId,
         text: input.text,
       }),
     });
