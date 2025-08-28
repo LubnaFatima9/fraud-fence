@@ -40,17 +40,18 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     outputSchema: AnalyzeImageForFraudOutputSchema,
   },
   async input => {
-    const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
-    const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
+    const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
+    const cogniflowModelId = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
     const url = `https://predict.cogniflow.ai/image/llm-classification/predict/${cogniflowModelId}`;
 
     const base64Image = input.photoDataUri.split(',')[1];
-    const mimeType = input.photoDataUri.match(/data:(image\/(\w+));base64,/)?.[2];
-    const imageFormat = mimeType || 'jpeg';
+    const mimeType = input.photoDataUri.match(/data:(image\/(\w+));base64,/)?.[1] || 'image/jpeg';
+    const imageFormat = mimeType.split('/')[1];
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
+        'accept': 'application/json',
         'Content-Type': 'application/json',
         'x-api-key': cogniflowApiKey,
       },
@@ -66,7 +67,7 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     }
 
     const result = await response.json();
-
+    
     const primaryPrediction = result.predictions[0];
     const isFraudulent = primaryPrediction.label.toLowerCase() === 'fraud';
     const confidenceScore = primaryPrediction.confidence;
