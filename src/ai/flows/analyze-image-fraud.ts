@@ -39,8 +39,8 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     outputSchema: AnalyzeImageForFraudOutputSchema,
   },
   async input => {
-    const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
-    const cogniflowModelId = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
+    const cogniflowApiKey = 'cdc872e5-00ae-4d32-936c-a80bf6a889ce';
+    const cogniflowModelId = '69cd908d-f479-49f2-9984-eb6c5d462417';
     const url = `https://api.cogniflow.ai/v1/models/${cogniflowModelId}/predict`;
 
     // The data URI needs to be stripped of its prefix `data:image/...;base64,`
