@@ -60,8 +60,8 @@ const analyzeTextForFraudFlow = ai.defineFlow(
     const result = await response.json();
 
     const primaryPrediction = result.result[0];
-    const isFraudulent = primaryPrediction.prediction.toLowerCase() === 'fraud';
-    const confidenceScore = primaryPrediction.score;
+    const isFraudulent = primaryPrediction.label.toLowerCase() === 'fraud';
+    const confidenceScore = primaryPrediction.confidence;
 
     return {
       isFraudulent,
