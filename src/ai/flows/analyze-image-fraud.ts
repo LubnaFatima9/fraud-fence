@@ -41,16 +41,15 @@ const analyzeImageForFraudFlow = ai.defineFlow(
   async input => {
     const cogniflowApiKey = '764ea05f-f623-4c7f-919b-dac6cf7223f3';
     const cogniflowModelId = 'ba056844-ddea-47fb-b6f5-9adcf567cbae';
-    const url = `https://api.cogniflow.ai/v2/deployment/predict`;
+    const url = `https://api.cogniflow.ai/v2/deployments/${cogniflowModelId}/predict`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'API-Key': cogniflowApiKey,
+        Authorization: `API-KEY ${cogniflowApiKey}`,
       },
       body: JSON.stringify({
-        deployment_id: cogniflowModelId,
         image_url: input.photoDataUri,
       }),
     });
