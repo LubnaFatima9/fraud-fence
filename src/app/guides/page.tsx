@@ -29,33 +29,82 @@ export default function GuidesPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline text-2xl">
                     <AlertTriangle className="h-6 w-6 text-primary" />
-                    Common Online Scams
+                    Common Online Scams: A Threat Briefing
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
-                      <AccordionTrigger className="text-lg font-semibold">Phishing Scams</AccordionTrigger>
+                      <AccordionTrigger className="text-lg font-semibold">Phishing & Smishing Attacks</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
-                        Phishing involves tricking individuals into giving away personal information, such as passwords or credit card numbers, by pretending to be a legitimate entity. These often come as emails or text messages that look like they're from your bank, a social media site, or another trusted source. Always verify the sender and never click on suspicious links.
+                        <div className="space-y-4">
+                            <p>Phishing is a deceptive attempt to steal your sensitive information (credentials, credit card numbers) by impersonating a trustworthy entity in an electronic communication. These are not just simple emails anymore; they are sophisticated, targeted attacks.</p>
+                            <h4 className="font-semibold text-foreground">How to Avoid:</h4>
+                            <ul className="list-disc space-y-2 pl-5">
+                                <li><strong>Scrutinize the Sender:</strong> Do not trust the display name. Inspect the actual email address or phone number. Look for subtle misspellings or unusual domains (e.g., `microsft.com` instead of `microsoft.com`).</li>
+                                <li><strong>Hover Before You Click:</strong> Always hover your cursor over links to preview the actual destination URL. If the link text and the destination do not match, it is a red flag.</li>
+                                <li><strong>Look for Urgency & Threats:</strong> Scammers create a false sense of urgency, threatening to close your account or demanding immediate action. Legitimate organizations do not operate this way.</li>
+                                <li><strong>Never Provide Information via Email/SMS:</strong> Your bank or any reputable service will never ask you to confirm passwords, PINs, or full personal details through a link in an email or text message.</li>
+                            </ul>
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">
-                      <AccordionTrigger className="text-lg font-semibold">Fake Job Offers</AccordionTrigger>
+                      <AccordionTrigger className="text-lg font-semibold">Fake Job & Employment Scams</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
-                        Scammers post fake job listings or send unsolicited offers to steal your personal information or money. They might ask for a fee for training or a background check. Legitimate employers will never ask for payment to hire you. Research the company and be wary of offers that seem too good to be true.
+                        <div className="space-y-4">
+                            <p>These scams exploit your need for employment to steal your money and personal data. They post convincing job listings on legitimate sites or contact you directly with unsolicited offers that are too good to be true.</p>
+                             <h4 className="font-semibold text-foreground">How to Avoid:</h4>
+                             <ul className="list-disc space-y-2 pl-5">
+                                <li><strong>No Legitimate Employer Charges You:</strong> You should never have to pay for a job. Be instantly suspicious of any request for fees for training, background checks, equipment, or software.</li>
+                                <li><strong>Verify the Company Independently:</strong> Search for the company's official website and career page. Does the job exist there? Contact them through official channels, not the ones provided by the "recruiter".</li>
+                                <li><strong>Unprofessional Communication:</strong> Poor grammar, spelling errors, and the use of personal email addresses (e.g., `@gmail.com`) for official communication are major red flags.</li>
+                                <li><strong>Unusual Interview Process:</strong> Interviews conducted solely via text message or instant messenger are highly suspicious. A real job offer will involve formal interviews.</li>
+                            </ul>
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-3">
-                      <AccordionTrigger className="text-lg font-semibold">QR Code Scams</AccordionTrigger>
+                      <AccordionTrigger className="text-lg font-semibold">QR Code & Malicious Link Scams</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
-                        Fraudsters place malicious QR code stickers over legitimate ones in public places like parking meters or restaurants. Scanning the fake code can lead you to a phishing website that steals your payment details or installs malware on your device. Always check that a QR code is not a sticker placed on top of another.
+                       <div className="space-y-4">
+                            <p>Fraudsters are increasingly using QR codes to direct victims to malicious websites. They place fraudulent stickers over legitimate codes on everything from restaurant menus to parking meters and EV charging stations.</p>
+                             <h4 className="font-semibold text-foreground">How to Avoid:</h4>
+                            <ul className="list-disc space-y-2 pl-5">
+                                <li><strong>Physically Inspect the QR Code:</strong> Before scanning, check if the QR code is a sticker placed on top of another. Feel the edges. If it looks tampered with, do not scan it.</li>
+                                <li><strong>Preview the Link:</strong> Many modern smartphones show you a preview of the URL before opening it. If the URL looks suspicious, shortened, or completely unrelated to the context, do not proceed.</li>
+                                <li><strong>Be Wary of Urgent Payments:</strong> Scammers create fake payment portals. If you're paying for a service, ensure the website is the official, secure site. Look for `https://` and a lock icon.</li>
+                            </ul>
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
-                      <AccordionTrigger className="text-lg font-semibold">Investment & Crypto Scams</AccordionTrigger>
+                      <AccordionTrigger className="text-lg font-semibold">Investment & "Pig Butchering" Scams</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
-                        Often starting with a "wrong number" text, scammers build trust over time and then convince you to invest in a fraudulent cryptocurrency or trading platform. This is known as 'pig butchering'. Be highly skeptical of investment advice from strangers online and only use reputable, well-known investment platforms.
+                        <div className="space-y-4">
+                            <p>This is a long-term, psychologically manipulative scam. It often starts with a "wrong number" text message. The scammer builds a relationship—friendship or romance—over weeks or months. After gaining your trust, they "fatten the pig" by convincing you to invest in a fraudulent cryptocurrency or trading platform they control. Once your money is in, it's gone forever.</p>
+                            <h4 className="font-semibold text-foreground">How to Avoid:</h4>
+                            <ul className="list-disc space-y-2 pl-5">
+                                <li><strong>Never Trust Financial Advice from Strangers Online:</strong> This is a non-negotiable rule. Your financial decisions should be made after consulting with licensed professionals, not someone you met via a random text.</li>
+                                <li><strong>Reject All Unsolicited Investment Offers:</strong> Legitimate investments are not offered through unsolicited text messages or social media DMs.</li>
+                                <li><strong>Use Reputable Platforms Only:</strong> If you choose to invest in cryptocurrency, only use large, well-known, and regulated exchanges that you can download from official app stores. Never use a link or app provided by someone you've only met online.</li>
+                            </ul>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-5">
+                      <AccordionTrigger className="text-lg font-semibold text-destructive">Sextortion & Blackmail Scams</AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground">
+                        <div className="space-y-4">
+                            <p className="font-bold">This is not a joke. This is a dangerous and aggressive form of blackmail that thrives on fear and shame. Scammers will either trick a victim into producing compromising material or use AI to create convincing fake images/videos. They then threaten to send this material to your family, friends, and colleagues unless you pay them.</p>
+                            <h4 className="font-semibold text-destructive">What to Do—Immediate Actions:</h4>
+                            <ul className="list-disc space-y-2 pl-5">
+                                <li><strong>DO NOT PAY.</strong> Paying the ransom will not solve the problem. They will see you as a source of income and demand more. They may share the images anyway.</li>
+                                <li><strong>CEASE ALL COMMUNICATION.</strong> Immediately block the scammer on all platforms. Do not reply, do not negotiate. Any interaction is a sign of weakness to them.</li>
+                                <li><strong>PRESERVE EVIDENCE.</strong> Take screenshots of all conversations, profiles, and payment demands. This is crucial for a police report.</li>
+                                <li><strong>REPORT TO THE AUTHORITIES.</strong> Contact your local police or the National Cyber Crime Reporting Portal immediately. This is a serious crime, and they are equipped to handle it. You are a victim, not a perpetrator.</li>
+                            </ul>
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
