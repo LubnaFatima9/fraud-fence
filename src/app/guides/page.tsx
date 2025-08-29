@@ -44,13 +44,13 @@ export default function GuidesPage() {
                       <AccordionTrigger className="text-lg font-semibold">Fake Job Offers</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
                         Scammers post fake job listings or send unsolicited offers to steal your personal information or money. They might ask for a fee for training or a background check. Legitimate employers will never ask for payment to hire you. Research the company and be wary of offers that seem too good to be true.
-                      </ionContent>
+                      </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-3">
                       <AccordionTrigger className="text-lg font-semibold">QR Code Scams</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
                         Fraudsters place malicious QR code stickers over legitimate ones in public places like parking meters or restaurants. Scanning the fake code can lead you to a phishing website that steals your payment details or installs malware on your device. Always check that a QR code is not a sticker placed on top of another.
-                      </ionContent>
+                      </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
                       <AccordionTrigger className="text-lg font-semibold">Investment & Crypto Scams</AccordionTrigger>
