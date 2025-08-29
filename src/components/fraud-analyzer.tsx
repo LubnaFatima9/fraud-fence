@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -42,6 +42,7 @@ import {
   type AnalysisResultData,
 } from "@/components/analysis-result";
 import { Label } from "./ui/label";
+import { Logo } from "./logo";
 
 const textSchema = z.object({
   text: z.string().min(10, "Text must be at least 10 characters long.").max(5000, "Text must be 5000 characters or less."),
@@ -53,12 +54,22 @@ const urlSchema = z.object({
 
 type TabValue = "text" | "image" | "url";
 
+const loadingMessages = [
+    "Connecting to AI model...",
+    "Analyzing content patterns...",
+    "Cross-referencing threat databases...",
+    "Scanning for malicious indicators...",
+    "Generating explanation...",
+    "Finalizing report...",
+];
+
 export function FraudAnalyzer() {
   const [activeTab, setActiveTab] = useState<TabValue>("text");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResultData | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0]);
 
   const { toast } = useToast();
 
@@ -72,6 +83,18 @@ export function FraudAnalyzer() {
     defaultValues: { url: "" },
   });
   
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      let messageIndex = 0;
+      interval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[messageIndex]);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabValue);
     setResult(null);
@@ -232,7 +255,17 @@ export function FraudAnalyzer() {
           </TabsContent>
         </Tabs>
         
-        {loading && <div className="mt-6 flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}
+        {loading && (
+          <div className="mt-6 flex flex-col items-center justify-center gap-4 p-8 text-center">
+            <Logo className="h-16 w-16 animate-pulse-slow" />
+            <p className="font-semibold text-primary/90 transition-all duration-300">
+              {loadingMessage}
+            </p>
+            <p className="text-sm text-muted-foreground">
+                Please wait, this can take a moment...
+            </p>
+          </div>
+        )}
         {result && <AnalysisResult result={result} />}
       </CardContent>
     </Card>
