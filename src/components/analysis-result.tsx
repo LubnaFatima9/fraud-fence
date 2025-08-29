@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { reportFraud, type ReportFraudInput } from "@/ai/flows/report-fraud";
+import { cn } from "@/lib/utils";
 
 export type AnalysisResultData = {
   type: "text" | "image" | "url";
@@ -126,7 +127,12 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   };
 
   return (
-    <Card className="mt-6 animate-in fade-in-50 duration-500">
+    <Card className={cn(
+        "mt-6 animate-in fade-in-50 duration-500",
+        isFraud 
+            ? "bg-gradient-to-br from-destructive/10 via-red-500/10 to-destructive/20 dark:from-destructive/20 dark:via-red-900/20 dark:to-destructive/30" 
+            : "bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-600/20 dark:from-green-900/20 dark:via-emerald-800/20 dark:to-green-900/30"
+    )}>
       <CardHeader className="text-center">
         <div className="mx-auto mb-4">
           <ResultIcon result={result} />
