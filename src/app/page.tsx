@@ -4,8 +4,11 @@ import { AppFooter } from '@/components/layout/footer';
 import { FraudAnalyzer } from '@/components/fraud-analyzer';
 import { ExtensionPromo } from '@/components/extension-promo';
 import { TrendingScamNews } from '@/components/trending-scam-news';
+import { getTrendingNews } from '@/lib/news';
 
-export default function Home() {
+export default async function Home() {
+  const initialNews = await getTrendingNews();
+
   return (
     <div className="flex min-h-screen flex-col">
       <AppHeader />
@@ -27,11 +30,10 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <TrendingScamNews />
+        <TrendingScamNews initialNews={initialNews} />
         <ExtensionPromo />
       </main>
       <AppFooter />
     </div>
   );
 }
-    
