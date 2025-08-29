@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
 const RewriteHeadlinesInputSchema = z.object({
   headlines: z.array(z.string()).describe('The list of headlines to rewrite.'),
@@ -28,6 +29,7 @@ const rewriteHeadlinesPrompt = ai.definePrompt({
     name: 'rewriteHeadlinesPrompt',
     input: { schema: RewriteHeadlinesInputSchema },
     output: { schema: RewriteHeadlinesOutputSchema },
+    model: googleAI.model('gemini-1.5-pro-preview'),
     prompt: `You are a social media expert who writes catchy headlines. For each of the following formal news headlines, rewrite it into a short, eye-catching, and casual headline for a news ticker. Keep each one under 10 words.
 
     Return the rewritten headlines as a JSON array in the 'rewrittenHeadlines' field, maintaining the original order.
