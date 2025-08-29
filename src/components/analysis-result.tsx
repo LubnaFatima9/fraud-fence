@@ -63,24 +63,24 @@ const ResultIcon: FC<{ result: AnalysisResultData }> = ({ result }) => {
 
   if (isFraud) {
     if (confidence > 0.75) {
-      return <ShieldX className="h-12 w-12 text-destructive" />;
+      return <ShieldX className="h-12 w-12 text-red-500" />;
     }
     return <ShieldAlert className="h-12 w-12 text-yellow-500" />;
   }
-  return <ShieldCheck className="h-12 w-12 text-green-600" />;
+  return <ShieldCheck className="h-12 w-12 text-emerald-500" />;
 };
 
 const ResultTitle: FC<{ result: AnalysisResultData }> = ({ result }) => {
   const isFraud = result.isFraudulent === true || (result.isSafe === false && (result.threatTypes?.length ?? 0) > 0);
   if (isFraud) {
     return (
-      <CardTitle className="font-headline text-2xl text-destructive">
+      <CardTitle className="font-headline text-2xl text-red-500">
         Potential Fraud Detected
       </CardTitle>
     );
   }
   return (
-    <CardTitle className="font-headline text-2xl text-green-600">
+    <CardTitle className="font-headline text-2xl text-emerald-500">
       Looks Safe
     </CardTitle>
   );

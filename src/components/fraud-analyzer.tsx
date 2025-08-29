@@ -144,7 +144,7 @@ export function FraudAnalyzer() {
   );
 
   return (
-    <Card className="w-full shadow-2xl shadow-primary/10">
+    <Card className="w-full shadow-2xl shadow-primary/10 bg-white/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="font-headline text-center text-2xl">
           FraudFence Analyzer
