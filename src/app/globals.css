@@ -76,11 +76,11 @@
   }
 
   .light body {
-     background-image: linear-gradient(to right top, #0b215a, #00429d, #4264c7, #7688ee, #a9adff, #d1b8ff, #f1c5f6, #ffd3e9, #ffd9d8, #ffe2cc, #ffefc6, #ffffe0);
+     background-image: linear-gradient(to right top, #0b215a, #4264c7, #a9adff, #f1c5f6, #ffd3e9, #ffefc6, #ffffe0);
   }
 
   .dark body {
-    background-color: hsl(var(--background));
+    background-image: linear-gradient(to right top, #051937, #1b2b5a, #383c7d, #5a4da0, #805ec1);
   }
 }
     
