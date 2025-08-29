@@ -1,48 +1,36 @@
 
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { Rss, TrendingUp, RefreshCw } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Rss, TrendingUp } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from 'next/link';
 import { type NewsData } from "@/lib/news";
-import { Button } from "./ui/button";
-import { refreshNewsAction } from "@/app/actions";
 
 export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
-  const [isPending, startTransition] = useTransition();
-  const [news, setNews] = useState(initialNews);
+  const [news] = useState(initialNews);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This effect runs only on the client, after the initial render.
+    // This effect runs only on the client, after the initial render, to prevent hydration mismatch.
     setIsClient(true);
   }, []);
-
-
-  const handleRefresh = () => {
-    startTransition(async () => {
-        const freshNews = await refreshNewsAction();
-        setNews(freshNews);
-    });
-  };
 
   const tickerText = news.tickerHeadlines.join(" • ");
 
   return (
     <section className="w-full bg-muted/50 py-12 md:py-24">
       <div className="container px-4 md:px-6">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
                 <Rss className="h-6 w-6 text-primary" />
                 <h2 className="font-headline text-3xl font-bold tracking-tighter">
                     Trending Scam News
                 </h2>
             </div>
-            <Button variant="outline" onClick={handleRefresh} disabled={isPending}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${isPending ? 'animate-spin' : ''}`} />
-                {isPending ? 'Refreshing...' : 'Refresh'}
-            </Button>
+            <p className="text-sm text-muted-foreground">
+                News automatically updates hourly.
+            </p>
         </div>
 
         {/* News Ticker */}
@@ -56,7 +44,6 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
              <div className="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-background to-transparent" />
              <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-background to-transparent" />
         </div>
-
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {news.articles.slice(0, 5).map((article, index) => (

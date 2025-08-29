@@ -6,6 +6,8 @@ import { ExtensionPromo } from '@/components/extension-promo';
 import { TrendingScamNews } from '@/components/trending-scam-news';
 import { getTrendingNews } from '@/lib/news';
 
+export const revalidate = 3600; // Revalidate every hour
+
 export default async function Home() {
   const initialNews = await getTrendingNews();
 
