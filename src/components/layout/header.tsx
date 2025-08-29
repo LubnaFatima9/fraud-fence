@@ -6,12 +6,12 @@ import { ThemeSwitch } from '../theme-switch';
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="flex items-center space-x-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-            <span className="font-bold font-headline sm:inline-block">
+            <ShieldCheck className="h-6 w-6 text-primary animate-pulse-slow" />
+            <span className="font-bold font-headline sm:inline-block animate-logo-glow">
               FraudFence
             </span>
           </Link>

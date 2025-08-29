@@ -9,7 +9,7 @@ export default function AboutPage() {
     <div className="flex min-h-screen flex-col">
       <AppHeader />
       <main className="flex-1 bg-muted/20">
-        <section className="w-full py-12 md:py-24 lg:py-32">
+        <section className="w-full animate-fade-in-up py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">

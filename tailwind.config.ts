@@ -92,15 +92,36 @@ export default {
         'marquee-infinite': {
             '0%': { transform: 'translateX(0%)' },
             '100%': { transform: 'translateX(-50%)' },
+        },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'logo-glow': {
+          '0%, 100%': { textShadow: '0 0 10px hsl(var(--primary)/0.5), 0 0 20px hsl(var(--primary)/0.2)', transform: 'scale(1)' },
+          '50%': { textShadow: '0 0 15px hsl(var(--primary)/0.8), 0 0 30px hsl(var(--primary)/0.4)', transform: 'scale(1.02)' },
+        },
+        'pulse-slow': {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.8', transform: 'scale(1.05)' },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'marquee-infinite': 'marquee-infinite 60s linear infinite',
+        'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+        'logo-glow': 'logo-glow 5s ease-in-out infinite',
+        'pulse-slow': 'pulse-slow 4s ease-in-out infinite',
+      },
+      animationDelay: {
+        '100': '100ms',
+        '200': '200ms',
+        '300': '300ms',
+        '400': '400ms',
+        '500': '500ms',
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('tailwindcss-animation-delay')],
 } satisfies Config;
-    

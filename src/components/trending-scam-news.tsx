@@ -48,7 +48,7 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {news.articles.slice(0, 5).map((article, index) => (
             <Link key={article.url + index} href={article.url} target="_blank" rel="noopener noreferrer" className="group block">
-                <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow duration-300 hover:shadow-lg">
+                <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105">
                     <div className="p-6">
                         <div className="flex items-center justify-between">
                             <h3 className="font-headline text-lg font-bold leading-tight group-hover:text-primary">
