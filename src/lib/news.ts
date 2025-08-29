@@ -89,6 +89,16 @@ export async function getTrendingNews(): Promise<NewsData> {
     } catch (rewriteError) {
         console.error("Headline rewrite failed, falling back to original headlines:", rewriteError);
         rewrittenHeadlines = originalHeadlines;
+
+        // If the error is a rate limit error, we don't want to re-throw it.
+        // We've already fallen back to the original headlines.
+        if (rewriteError instanceof Error && rewriteError.message.includes("429")) {
+            // Log a less severe message, since we handled it gracefully.
+            console.warn("AI rate limit hit. Displaying original news headlines.");
+        } else {
+            // For other errors, re-throw to see them in the browser.
+            throw rewriteError;
+        }
     }
 
     return { articles, tickerHeadlines: rewrittenHeadlines };
