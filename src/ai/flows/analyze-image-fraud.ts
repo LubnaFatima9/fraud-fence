@@ -104,21 +104,29 @@ const analyzeImageForFraudFlow = ai.defineFlow(
 
     const confidenceScore = primaryPrediction?.score ?? 0;
     
-    // Now, use a generative model to explain *why*.
-    const { output } = await fraudImageExplanationPrompt({
-        ...input,
-        isFraudulent,
-        confidenceScore
-    });
-    if (!output) {
-        throw new Error("GenAI analysis failed to provide an explanation.");
+    let explanation = "An AI explanation could not be generated at this time.";
+
+    try {
+      // Now, use a generative model to explain *why*.
+      const { output } = await fraudImageExplanationPrompt({
+          ...input,
+          isFraudulent,
+          confidenceScore
+      });
+      if (output?.explanation) {
+        explanation = output.explanation;
+      }
+    } catch (error) {
+      console.error("GenAI explanation for image fraud failed:", error);
+      // Fallback to the default explanation already set
     }
+
 
     // Combine the results, using the specialized model's verdict and the generative model's explanation.
     return {
       isFraudulent,
       confidenceScore,
-      explanation: output.explanation,
+      explanation: explanation,
     };
   }
 );
