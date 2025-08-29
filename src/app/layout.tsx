@@ -4,7 +4,6 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
-import { Preloader } from '@/components/preloader';
 
 export const metadata: Metadata = {
   title: 'FraudFence',
@@ -30,7 +29,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Preloader />
           {children}
           <Toaster />
         </ThemeProvider>
