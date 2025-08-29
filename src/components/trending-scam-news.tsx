@@ -2,6 +2,7 @@
 import { Rss, TrendingUp } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from 'next/link';
+import { rewriteHeadline } from "@/ai/flows/rewrite-headline";
 
 type Article = {
   title: string;
@@ -67,19 +68,26 @@ async function getTrendingNews() {
     const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate every hour
     if (!response.ok) {
       console.error("GNews API error:", response.status, response.statusText);
-      return placeholderData;
+      return { articles: placeholderData, tickerHeadlines: placeholderData.map(a => a.title).join(" • ") };
     }
     const data = await response.json();
-    return data.articles || placeholderData;
+    const articles = data.articles || placeholderData;
+
+    // Rewrite headlines for the ticker
+    const rewrittenHeadlines = await Promise.all(
+        articles.slice(0, 5).map((article: Article) => rewriteHeadline(article.title))
+    );
+    const tickerHeadlines = rewrittenHeadlines.join(" • ");
+
+    return { articles, tickerHeadlines };
   } catch (error) {
     console.error("Failed to fetch trending news:", error);
-    return placeholderData;
+    return { articles: placeholderData, tickerHeadlines: placeholderData.map(a => a.title).join(" • ") };
   }
 }
 
 export async function TrendingScamNews() {
-  const articles = await getTrendingNews();
-  const tickerHeadlines = articles.map(a => a.title).join(" • ");
+  const { articles, tickerHeadlines } = await getTrendingNews();
 
   return (
     <section className="w-full bg-muted/50 py-12 md:py-24">
