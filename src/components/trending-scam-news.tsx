@@ -5,7 +5,12 @@ import { useState, useEffect } from "react";
 import { Rss, TrendingUp } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from 'next/link';
-import { type NewsData } from "@/lib/news";
+
+// Update NewsData to expect the formatted date
+import type { NewsData as BaseNewsData, Article as BaseArticle } from "@/lib/news";
+export type Article = BaseArticle & { formattedDate: string };
+export type NewsData = Omit<BaseNewsData, 'articles'> & { articles: Article[] };
+
 
 export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
   const [news] = useState(initialNews);
@@ -66,7 +71,7 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
                             <time dateTime={article.publishedAt}>
                                 {isClient
                                   ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })
-                                  : format(new Date(article.publishedAt), 'MMM d, yyyy')
+                                  : article.formattedDate
                                 }
                             </time>
                         </div>
