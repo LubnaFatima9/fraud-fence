@@ -3,6 +3,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { FraudAnalyzer } from '@/components/fraud-analyzer';
 import { ExtensionPromo } from '@/components/extension-promo';
+import { TrendingScamNews } from '@/components/trending-scam-news';
 
 export default function Home() {
   return (
@@ -26,6 +27,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <TrendingScamNews />
         <ExtensionPromo />
       </main>
       <AppFooter />
