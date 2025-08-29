@@ -18,6 +18,9 @@ export function AppHeader() {
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
            <Button variant="ghost" asChild>
+              <Link href="/guides">Guides</Link>
+           </Button>
+           <Button variant="ghost" asChild>
               <Link href="/about">About</Link>
            </Button>
           <Button>Get Extension</Button>
