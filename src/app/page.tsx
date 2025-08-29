@@ -19,7 +19,7 @@ export default async function Home() {
          <div 
             className="absolute inset-0 z-[-1]"
             style={{
-                backgroundImage: 'linear-gradient(to right top, #051937, #131a40, #231a48, #34194f, #451654, #5b185b, #711c60, #872164, #a83063, #c6435c, #de5a52, #f17347)',
+                backgroundImage: 'linear-gradient(to right top, #051937, #1b2b5a, #383c7d, #5a4da0, #805ec1)',
             }}
          />
           <div className="container px-4 md:px-6">
