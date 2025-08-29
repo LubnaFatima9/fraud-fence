@@ -76,7 +76,7 @@
   }
 
   .light body {
-     background-image: linear-gradient(to right top, #0b215a, #4264c7, #a9adff, #f1c5f6, #ffd3e9, #ffefc6, #ffffe0);
+     background-image: linear-gradient(to right top, #a9adff, #f1c5f6, #ffd3e9, #ffefc6, #ffffe0);
   }
 
   .dark body {
