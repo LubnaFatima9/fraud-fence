@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Rss, TrendingUp, RefreshCw } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import Link from 'next/link';
 import { type NewsData } from "@/lib/news";
 import { Button } from "./ui/button";
@@ -12,6 +12,13 @@ import { refreshNewsAction } from "@/app/actions";
 export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
   const [isPending, startTransition] = useTransition();
   const [news, setNews] = useState(initialNews);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This effect runs only on the client, after the initial render.
+    setIsClient(true);
+  }, []);
+
 
   const handleRefresh = () => {
     startTransition(async () => {
@@ -70,7 +77,10 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span>{article.source.name}</span>
                             <time dateTime={article.publishedAt}>
-                            {formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}
+                                {isClient
+                                  ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })
+                                  : format(new Date(article.publishedAt), 'MMM d, yyyy')
+                                }
                             </time>
                         </div>
                     </div>
