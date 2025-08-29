@@ -17,7 +17,7 @@ export default async function Home() {
       <main className="flex-1">
         <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
          <div 
-            className="absolute inset-0 z-[-1] dark:bg-gradient-to-r dark:from-purple-600/50 dark:via-blue-500/50 dark:to-yellow-400/50"
+            className="absolute inset-0 z-[-1]"
          />
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center animate-fade-in-up">
