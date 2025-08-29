@@ -73,7 +73,14 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(to right top, #6d329d, #8f43b3, #b155c9, #d268df, #f47cf4, #ff82d5, #ff8fb8, #ffa1a1, #ffbba5, #ffd5b4, #ffeecf, #ffffe0);
+  }
+
+  .light body {
+     background-image: linear-gradient(to right top, #6d329d, #8f43b3, #b155c9, #d268df, #f47cf4, #ff82d5, #ff8fb8, #ffa1a1, #ffbba5, #ffd5b4, #ffeecf, #ffffe0);
+  }
+
+  .dark body {
+    background-color: hsl(var(--background));
   }
 }
     

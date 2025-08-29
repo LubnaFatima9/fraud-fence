@@ -2,6 +2,7 @@
 import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ThemeSwitch } from '../theme-switch';
 
 export function AppHeader() {
   return (
@@ -20,6 +21,7 @@ export function AppHeader() {
               <Link href="/about">About</Link>
            </Button>
           <Button>Get Extension</Button>
+          <ThemeSwitch />
         </div>
       </div>
     </header>
