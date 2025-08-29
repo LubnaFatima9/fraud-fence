@@ -1,8 +1,8 @@
 
-import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ThemeSwitch } from '../theme-switch';
+import { Logo } from '../logo';
 
 export function AppHeader() {
   return (
@@ -10,7 +10,7 @@ export function AppHeader() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="flex items-center space-x-2">
-            <ShieldCheck className="h-6 w-6 text-primary animate-pulse-slow" />
+            <Logo className="h-8 w-8" />
             <span className="font-bold font-headline sm:inline-block animate-logo-glow">
               FraudFence
             </span>
