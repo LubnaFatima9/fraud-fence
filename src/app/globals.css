@@ -58,7 +58,7 @@
     --accent: 0 100% 70.6%;
     --accent-foreground: 210 20% 98%;
  
-    --destructive: 0 72.2% 50.6%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 85.7% 97.3%;
 
     --border: 215 27.9% 16.9%;
@@ -76,7 +76,7 @@
   }
 
   .light body {
-     background-color: hsl(var(--background));
+    background-image: linear-gradient(to right top, #d1f2fc, #d8e5ff, #ebd9ff, #ffd2f2, #ffcfd8);
   }
 
   .dark body {
