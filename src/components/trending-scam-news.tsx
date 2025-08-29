@@ -5,14 +5,9 @@ import { useState, useTransition } from "react";
 import { Rss, TrendingUp, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from 'next/link';
-import { getTrendingNews, type NewsData } from "@/lib/news";
+import { type NewsData } from "@/lib/news";
 import { Button } from "./ui/button";
-
-async function refreshNewsAction(): Promise<NewsData> {
-    'use server';
-    // This is a server action. It re-fetches and re-processes the news.
-    return getTrendingNews();
-}
+import { refreshNewsAction } from "@/app/actions";
 
 export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
   const [isPending, startTransition] = useTransition();
