@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { tryWithFallback } from './try-with-fallback';
 
 const AnalyzeTextForFraudInputSchema = z.object({
   text: z.string().describe('The text to analyze for potential fraud.'),
@@ -78,14 +79,14 @@ const analyzeTextForFraudFlow = ai.defineFlow(
   },
   async input => {
     // 1. Detect the language
-    const { output: langOutput } = await detectLanguagePrompt({ text: input.text });
+    const langOutput = await tryWithFallback(detectLanguagePrompt, { text: input.text });
     const sourceLanguage = langOutput?.language || 'en';
 
     let textToAnalyze = input.text;
 
     // 2. Translate to English if necessary
     if (sourceLanguage !== 'en') {
-        const { output: translationOutput } = await translateTextPrompt({
+        const translationOutput = await tryWithFallback(translateTextPrompt, {
             text: input.text,
             targetLanguage: 'English',
             sourceLanguage,
@@ -116,7 +117,7 @@ const analyzeTextForFraudFlow = ai.defineFlow(
 
     if (!response.ok) {
         // Fallback to pure GenAI analysis if Cogniflow fails
-        const { output } = await fraudAnalysisPrompt({ text: textToAnalyze });
+        const output = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
         if (!output) {
             throw new Error("GenAI analysis failed to provide a response.");
         }
@@ -127,14 +128,14 @@ const analyzeTextForFraudFlow = ai.defineFlow(
         confidenceScore = result.confidence_score;
 
         // Get the generative explanation based on the original text
-        const { output: explanationOutput } = await fraudAnalysisPrompt({ text: textToAnalyze });
+        const explanationOutput = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
         explanation = explanationOutput?.explanation || "Could not generate an explanation.";
     }
 
     // 4. Translate the explanation back to the source language if necessary
     let finalExplanation = explanation;
     if (sourceLanguage !== 'en') {
-        const { output: finalTranslationOutput } = await translateTextPrompt({
+        const finalTranslationOutput = await tryWithFallback(translateTextPrompt, {
             text: explanation,
             targetLanguage: sourceLanguage,
             sourceLanguage: 'en',
