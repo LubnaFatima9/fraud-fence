@@ -19,7 +19,7 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
   const tickerText = news.tickerHeadlines.join(" • ");
 
   return (
-    <section className="w-full bg-muted/50 py-12 md:py-24">
+    <section className="w-full bg-muted/50 py-12 md:py-24 dark:bg-gradient-to-br dark:from-blue-950 dark:via-purple-950 dark:to-slate-900">
       <div className="container px-4 md:px-6">
         <div className="mb-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">

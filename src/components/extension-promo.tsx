@@ -5,7 +5,7 @@ import { Download } from 'lucide-react';
 
 export function ExtensionPromo() {
   return (
-    <section className="w-full bg-primary/10 backdrop-blur-sm border-t border-b border-white/20">
+    <section className="w-full bg-primary/10 backdrop-blur-sm border-t border-b border-white/20 dark:bg-gradient-to-r dark:from-purple-900 dark:to-blue-950 dark:border-white/10">
       <div className="container grid items-center justify-center gap-4 px-4 py-12 text-center md:px-6 md:py-24 lg:gap-10">
         <div className="relative z-10 space-y-3">
           <h2 className="font-headline text-3xl font-bold tracking-tighter md:text-4xl/tight text-foreground">
