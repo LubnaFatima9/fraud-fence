@@ -17,18 +17,15 @@ export default async function Home() {
       <main className="flex-1">
         <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
          <div 
-            className="absolute inset-0 z-[-1]"
-            style={{
-                backgroundImage: 'linear-gradient(to right, #6d00c2, #001f8a, #000000)',
-            }}
+            className="absolute inset-0 z-[-1] dark:bg-gradient-to-r dark:from-[#6d00c2] dark:to-[#001f8a]"
          />
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center animate-fade-in-up">
               <div className="space-y-2">
-                <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none text-white">
+                <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none text-foreground dark:text-white">
                   Advanced Fraud Detection
                 </h1>
-                <p className="mx-auto max-w-[700px] text-gray-200 md:text-xl">
+                <p className="mx-auto max-w-[700px] text-muted-foreground dark:text-gray-200 md:text-xl">
                   Leverage AI to analyze text, images, and URLs for potential scams and fraudulent activity. Stay one step ahead of online threats.
                 </p>
               </div>
