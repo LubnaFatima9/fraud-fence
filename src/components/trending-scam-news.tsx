@@ -20,6 +20,7 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
     });
   };
 
+  const tickerText = news.tickerHeadlines.join(" • ");
 
   return (
     <section className="w-full bg-muted/50 py-12 md:py-24">
@@ -41,8 +42,8 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
         <div className="relative mb-8 h-10 w-full overflow-hidden bg-background shadow-inner">
             <div className="absolute inset-0 flex items-center">
                  <div className="animate-marquee-infinite whitespace-nowrap pl-full">
-                    <span className="mx-4 font-medium text-muted-foreground">{news.tickerHeadlines}</span>
-                    <span className="mx-4 font-medium text-muted-foreground">{news.tickerHeadlines}</span>
+                    <span className="mx-4 font-medium text-muted-foreground">{tickerText}</span>
+                    <span className="mx-4 font-medium text-muted-foreground">{tickerText}</span>
                  </div>
             </div>
              <div className="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-background to-transparent" />

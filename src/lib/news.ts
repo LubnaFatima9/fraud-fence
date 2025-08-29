@@ -1,5 +1,5 @@
 
-import { rewriteHeadline } from "@/ai/flows/rewrite-headline";
+import { rewriteHeadlines } from "@/ai/flows/rewrite-headline";
 
 export type Article = {
   title: string;
@@ -16,7 +16,7 @@ export type Article = {
 
 export type NewsData = {
     articles: Article[];
-    tickerHeadlines: string;
+    tickerHeadlines: string[];
 }
 
 const placeholderData: Article[] = [
@@ -70,20 +70,31 @@ export async function getTrendingNews(): Promise<NewsData> {
     const response = await fetch(url, { cache: 'no-store' }); 
     if (!response.ok) {
       console.error("GNews API error:", response.status, response.statusText);
-      return { articles: placeholderData, tickerHeadlines: placeholderData.map(a => a.title).join(" • ") };
+      const placeholderHeadlines = placeholderData.map(a => a.title);
+      return { articles: placeholderData, tickerHeadlines: placeholderHeadlines };
     }
     const data = await response.json();
-    const articles = data.articles && data.articles.length > 0 ? data.articles : placeholderData;
+    const articles: Article[] = data.articles && data.articles.length > 0 ? data.articles.slice(0, 5) : placeholderData;
 
     // Rewrite headlines for the ticker
-    const rewrittenHeadlines = await Promise.all(
-        articles.slice(0, 5).map((article: Article) => rewriteHeadline(article.title))
-    );
-    const tickerHeadlines = rewrittenHeadlines.join(" • ");
+    const originalHeadlines = articles.map((article: Article) => article.title);
 
-    return { articles, tickerHeadlines };
+    let rewrittenHeadlines: string[];
+    try {
+        rewrittenHeadlines = await rewriteHeadlines(originalHeadlines);
+        if (rewrittenHeadlines.length !== originalHeadlines.length) {
+          // If the AI didn't return the same number of headlines, fall back to the originals.
+          rewrittenHeadlines = originalHeadlines;
+        }
+    } catch (rewriteError) {
+        console.error("Headline rewrite failed, falling back to original headlines:", rewriteError);
+        rewrittenHeadlines = originalHeadlines;
+    }
+
+    return { articles, tickerHeadlines: rewrittenHeadlines };
   } catch (error) {
     console.error("Failed to fetch trending news:", error);
-    return { articles: placeholderData, tickerHeadlines: placeholderData.map(a => a.title).join(" • ") };
+    const placeholderHeadlines = placeholderData.map(a => a.title);
+    return { articles: placeholderData, tickerHeadlines: placeholderHeadlines };
   }
 }
