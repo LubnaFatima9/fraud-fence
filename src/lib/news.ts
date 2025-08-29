@@ -70,6 +70,10 @@ export async function getTrendingNews(): Promise<NewsData> {
     const response = await fetch(url, { cache: 'no-store' }); 
     if (!response.ok) {
       console.error("GNews API error:", response.status, response.statusText);
+       // Handle the specific 403 Forbidden error gracefully.
+      if (response.status === 403) {
+        console.warn("GNews API key is likely invalid or expired. Falling back to placeholder data.");
+      }
       const placeholderHeadlines = placeholderData.map(a => a.title);
       return { articles: placeholderData, tickerHeadlines: placeholderHeadlines };
     }
@@ -88,16 +92,16 @@ export async function getTrendingNews(): Promise<NewsData> {
         }
     } catch (rewriteError) {
         console.error("Headline rewrite failed, falling back to original headlines:", rewriteError);
-        rewrittenHeadlines = originalHeadlines;
 
         // If the error is a rate limit error, we don't want to re-throw it.
         // We've already fallen back to the original headlines.
-        if (rewriteError instanceof Error && rewriteError.message.includes("429")) {
+        if (rewriteError instanceof Error && (rewriteError.message.includes("429") || rewriteError.message.includes("500"))) {
             // Log a less severe message, since we handled it gracefully.
-            console.warn("AI rate limit hit. Displaying original news headlines.");
+            console.warn("AI rate limit hit or server error. Displaying original news headlines.");
+            rewrittenHeadlines = originalHeadlines;
         } else {
-            // For other errors, re-throw to see them in the browser.
-            throw rewriteError;
+            // For other errors, still fallback but log it for debugging
+            rewrittenHeadlines = originalHeadlines;
         }
     }
 
