@@ -35,17 +35,31 @@ const fraudAnalysisPrompt = ai.definePrompt({
     name: 'fraudAnalysisPrompt',
     input: { schema: z.object({ text: z.string() }) },
     output: { schema: AnalyzeTextForFraudOutputSchema },
-    prompt: `You are a friendly and helpful AI security assistant. Your goal is to analyze text for potential scams and explain your findings to the user in a clear, reassuring, and easy-to-understand way.
+    prompt: `You are an expert fraud detection specialist with years of experience in identifying scams, phishing attempts, and fraudulent communications. Your goal is to provide detailed, educational analysis that helps users understand potential threats.
 
-    Analyze the following text for any signs of fraud or deception:
+    Analyze the following text for any signs of fraud, scams, or deception:
     """
     {{{text}}}
     """
     
-    After your analysis, provide a response in JSON format with the following information:
-    1.  'isFraudulent': A boolean (true/false) indicating if you believe the text is a scam.
-    2.  'confidenceScore': A number between 0 and 1 representing your confidence in the assessment.
-    3.  'explanation': A comprehensive, step-by-step explanation of your reasoning. Use a conversational and reassuring tone. If the text is fraudulent, detail the specific red flags you identified (e.g., forced urgency, suspicious links, unusual payment requests, grammatical errors). If the text appears safe, explain why and offer general safety tips.
+    Provide a thorough analysis in JSON format with these fields:
+    1. 'isFraudulent': Boolean indicating if this is likely a scam or fraud
+    2. 'confidenceScore': Number 0-1 representing your confidence in the assessment
+    3. 'explanation': A comprehensive, educational explanation (minimum 200 words) covering:
+       - Overall assessment and reasoning
+       - Specific red flags or safety indicators identified
+       - Language patterns, urgency tactics, or psychological manipulation used
+       - Technical indicators (suspicious links, requests for information, etc.)
+       - Recommendations for the user
+       - Educational context about this type of scam (if applicable)
+    
+    Guidelines for explanations:
+    - Use clear, conversational language
+    - Be specific about what makes something suspicious or safe
+    - Provide actionable advice for the user
+    - Include context about common scam tactics when relevant
+    - If safe, explain why and offer general safety tips
+    - If fraudulent, detail specific red flags and protective measures
     `,
 });
 
@@ -124,12 +138,39 @@ const analyzeTextForFraudFlow = ai.defineFlow(
         ({ isFraudulent, confidenceScore, explanation } = output);
     } else {
         const result = await response.json();
-        isFraudulent = result.result.toLowerCase() === 'fraud';
-        confidenceScore = result.confidence_score;
+        console.log('🧠 Cogniflow Text API Response:', result);
+        
+        // More robust parsing of Cogniflow response
+        // Handle different possible response formats
+        if (result.result) {
+            const prediction = result.result.toLowerCase();
+            console.log('📊 Text Prediction:', prediction);
+            
+            // Check for fraud indicators in various forms
+            isFraudulent = prediction === 'fraud' || 
+                          prediction === 'scam' || 
+                          prediction === 'fraudulent' ||
+                          prediction.includes('fraud') ||
+                          prediction.includes('scam');
+                          
+            confidenceScore = result.confidence_score || result.confidence || 0.5;
+            
+            console.log('🔍 Text Analysis Result:', { isFraudulent, confidenceScore, prediction });
+        } else {
+            console.warn('⚠️ Unexpected Cogniflow response format:', result);
+            // Fallback to GenAI if response format is unexpected
+            const output = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
+            if (!output) {
+                throw new Error("Both Cogniflow and GenAI analysis failed.");
+            }
+            ({ isFraudulent, confidenceScore, explanation } = output);
+        }
 
         // Get the generative explanation based on the original text
-        const explanationOutput = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
-        explanation = explanationOutput?.explanation || "Could not generate an explanation.";
+        if (!explanation) {
+            const explanationOutput = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
+            explanation = explanationOutput?.explanation || "Could not generate a detailed explanation. Please try again or contact support.";
+        }
     }
 
     // 4. Translate the explanation back to the source language if necessary

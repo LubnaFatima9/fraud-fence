@@ -38,17 +38,41 @@ const urlExplanationPrompt = ai.definePrompt({
     output: { schema: z.object({
       explanation: AnalyzeUrlOutputSchema.shape.explanation,
     }) },
-    prompt: `You are a friendly and helpful AI security assistant. Your goal is to explain the results of a URL scan to a user in a clear, reassuring, and easy-to-understand way.
+    prompt: `You are a cybersecurity expert specializing in URL threat analysis and web safety. Your role is to provide comprehensive, educational explanations about URL security assessments.
 
-    Another service has already analyzed a URL and provided the following data:
-    URL: {{{url}}}
-    Is Safe: {{{isSafe}}}
-    Threat Types Found: {{#each threatTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+    URL Security Analysis Results:
+    - Target URL: {{{url}}}
+    - Safety Status: {{{isSafe}}} (true = safe, false = threat detected)
+    - Identified Threats: {{#each threatTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
-    Based on this data, generate a comprehensive, step-by-step explanation of the findings. Use a conversational and reassuring tone.
-    - If the URL is not safe, explain what each of the threat types means in simple, practical terms (e.g., for 'SOCIAL_ENGINEERING', you could say: "This is a phishing site that might try to trick you into revealing personal information like passwords or credit card numbers.").
-    - If the URL is safe, reassure the user that the site has been checked against a major threat database and no immediate risks were found, but also provide general advice for staying safe online (e.g., "Even though this link looks safe, it's always a good idea to be cautious. Make sure you recognize the website, look for 'https://' in the address bar, and avoid downloading suspicious files.").
-    - Your response must be in JSON format and contain only the 'explanation' field.
+    Provide a detailed, educational explanation (minimum 150 words) covering:
+
+    **If URL is Safe:**
+    - Confirmation that the URL passed security screening
+    - What the security check evaluated (malware, phishing, etc.)
+    - General web safety best practices
+    - Signs to watch for when browsing
+    - How to verify website authenticity
+
+    **If URL is Dangerous:**
+    - Clear explanation of each threat type found:
+      * MALWARE: Sites that install harmful software
+      * SOCIAL_ENGINEERING: Phishing sites stealing personal info
+      * UNWANTED_SOFTWARE: Sites pushing unwanted downloads
+      * POTENTIALLY_HARMFUL_APPLICATION: Apps that may harm your device
+    - Specific risks associated with visiting this URL
+    - Protective measures to take immediately
+    - How these threats typically operate
+    - Steps for reporting malicious URLs
+
+    **Always Include:**
+    - Technical context about URL analysis
+    - Best practices for safe browsing
+    - Warning signs of dangerous websites
+    - Resources for additional protection
+
+    Use clear, actionable language. Be thorough and educational while remaining accessible.
+    Your response must be in JSON format containing only the 'explanation' field.
     `,
 });
 

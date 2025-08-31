@@ -92,15 +92,27 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const isFraud = result.isFraudulent === true || (result.isSafe === false && (result.threatTypes?.length ?? 0) > 0);
   const confidence = result.confidenceScore ?? 0;
   
-  // Fix: Calculate fraud confidence correctly based on the analysis result
-  // If it's fraud, show the confidence as-is
-  // If it's safe, show how confident we are it's safe (not fraudulent)
-  let fraudConfidence = isFraud ? confidence: 1 - confidence;
-
-  let fraudConfidencePercentage = Math.round(fraudConfidence * 100);
+  // Fixed: Fraud confidence calculation
+  // For fraud cases: show the confidence as fraud likelihood (0-100%)
+  // For safe cases: show how confident we are it's safe (inverse of fraud confidence)
+  let fraudConfidencePercentage;
+  
+  if (isFraud) {
+    // If it's fraud, show the confidence in the fraud detection
+    fraudConfidencePercentage = Math.round(confidence * 100);
+  } else {
+    // If it's safe, show low fraud confidence (high safety confidence)
+    // Convert safety confidence to fraud confidence (inverted)
+    fraudConfidencePercentage = Math.round((1 - confidence) * 100);
+    // For safe content, fraud confidence should be low (typically 5-30%)
+    fraudConfidencePercentage = Math.min(fraudConfidencePercentage, 30);
+  }
 
   // Ensure percentage is within reasonable bounds
   fraudConfidencePercentage = Math.max(5, Math.min(95, fraudConfidencePercentage));
+  
+  // Calculate the actual fraud confidence for color coding
+  const fraudConfidence = fraudConfidencePercentage / 100;
 
 
   const handleReport = async () => {

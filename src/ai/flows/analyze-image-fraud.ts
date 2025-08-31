@@ -44,20 +44,44 @@ const fraudImageExplanationPrompt = ai.definePrompt({
   output: { schema: z.object({
     explanation: AnalyzeImageForFraudOutputSchema.shape.explanation,
   }) },
-  prompt: `You are a friendly and helpful AI security assistant. Your goal is to analyze an image for potential scams and explain your findings to the user in a clear, reassuring, and easy-to-understand way.
+  prompt: `You are an expert digital forensics analyst specializing in identifying fraudulent and deceptive visual content. Your expertise includes recognizing manipulated images, fake advertisements, phishing graphics, and other visual scam tactics.
 
-  Another AI model has already analyzed an image and made a determination. Your task is to provide a user-friendly explanation for this verdict.
+  Analysis from specialized fraud detection model:
+  - Classification Result: {{{isFraudulent}}} (fraud detected: true/false)  
+  - Model Confidence: {{{confidenceScore}}} (0-1 scale)
   
   Image to analyze:
   {{media url=photoDataUri}}
   
-  The verdict from the other model is:
-  - Is Fraudulent: {{{isFraudulent}}}
-  - Confidence Score: {{{confidenceScore}}}
-  
-  Based on the provided verdict and your own visual analysis, generate a comprehensive, step-by-step explanation of your reasoning. Use a conversational and reassuring tone.
-  - If it was deemed fraudulent, detail the specific red flags you identified (e.g., poorly edited text, fake logos, suspicious QR codes, unbelievable offers, or pressure tactics).
-  - If it was deemed safe, explain why it appears legitimate and offer general safety tips for images.
+  Provide a comprehensive, educational explanation (minimum 200 words) that includes:
+
+  **Visual Analysis:**
+  - Examine image quality, consistency, and editing artifacts
+  - Assess text elements (fonts, alignment, grammar, language)
+  - Evaluate branding, logos, and design professionalism
+  - Look for common visual scam indicators
+
+  **If Fraudulent:**
+  - Specific red flags identified (poor editing, fake logos, suspicious QR codes)
+  - Analysis of urgency tactics or psychological manipulation in the image
+  - Common characteristics of this type of visual scam
+  - How scammers typically use such images
+  - Protective measures and warning signs to watch for
+
+  **If Safe:**
+  - Professional elements that indicate legitimacy
+  - Consistent branding and design quality
+  - Absence of common scam indicators
+  - General tips for identifying fraudulent images
+
+  **Educational Context:**
+  - Background on this type of image-based fraud (if applicable)
+  - Technical details about image manipulation detection
+  - Best practices for image verification
+  - Resources for reporting suspicious content
+
+  Use a professional yet accessible tone. Be specific about visual elements and provide actionable advice.
+  Your response must be in JSON format containing only the 'explanation' field.
   Your response must be in JSON format and contain only the 'explanation' field.
   `,
 });
@@ -96,14 +120,36 @@ const analyzeImageForFraudFlow = ai.defineFlow(
     }
 
     const result = await response.json();
+    console.log('🖼️ Cogniflow Image API Response:', result);
     
-    const primaryPrediction = result.result?.find((r: any) => r.match === true);
-
-    const isFraudulent = primaryPrediction
-      ? primaryPrediction.name.toLowerCase() === 'scam'
-      : false;
-
-    const confidenceScore = primaryPrediction?.score ?? 0;
+    // More robust parsing of image analysis results
+    let isFraudulent = false;
+    let confidenceScore = 0;
+    
+    if (result.result && Array.isArray(result.result)) {
+        const primaryPrediction = result.result.find((r: any) => r.match === true);
+        
+        if (primaryPrediction) {
+            console.log('🎯 Primary Image Prediction:', primaryPrediction);
+            
+            // Check for various fraud/scam indicators
+            const predictionName = (primaryPrediction.name || '').toLowerCase();
+            isFraudulent = predictionName === 'scam' || 
+                          predictionName === 'fraud' || 
+                          predictionName === 'fraudulent' ||
+                          predictionName.includes('scam') ||
+                          predictionName.includes('fraud') ||
+                          predictionName.includes('phishing');
+                          
+            confidenceScore = primaryPrediction.score || 0;
+            
+            console.log('🔍 Image Analysis Result:', { isFraudulent, confidenceScore, predictionName });
+        } else {
+            console.warn('⚠️ No matching prediction found in image results:', result.result);
+        }
+    } else {
+        console.warn('⚠️ Unexpected image response format:', result);
+    }
     
     let explanation = "An AI explanation could not be generated at this time.";
 
