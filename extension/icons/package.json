@@ -1,0 +1,14 @@
+{
+  "name": "icon-generator",
+  "version": "1.0.0",
+  "description": "Generate placeholder icons for Fraud Fence Chrome Extension",
+  "main": "generate-icons.js",
+  "scripts": {
+    "generate": "node generate-icons.js",
+    "install-deps": "npm install canvas"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2"
+  },
+  "keywords": ["icons", "chrome-extension", "fraud-fence"]
+}

@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Fraud Fence - Scam Detector",
+  "version": "2.0.0",
+  "description": "Detect fraud, scams, and suspicious content across the web with real-time protection",
+  
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "scripting",
+    "activeTab",
+    "notifications",
+    "tabs"
+  ],
+  
+  "host_permissions": [
+    "https://fraud-fence.vercel.app/*",
+    "*://*/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Fraud Fence - Check for scams",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["warning-banner.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

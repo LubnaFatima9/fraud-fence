@@ -92,8 +92,30 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const isFraud = result.isFraudulent === true || (result.isSafe === false && (result.threatTypes?.length ?? 0) > 0);
   const confidence = result.confidenceScore ?? 0;
   
-  const fraudConfidence = isFraud ? confidence : 1 - confidence;
-  const fraudConfidencePercentage = Math.round(fraudConfidence * 100);
+  // Fix: Calculate fraud confidence correctly based on the analysis result
+  // If it's fraud, show the confidence as-is
+  // If it's safe, show how confident we are it's safe (not fraudulent)
+  let fraudConfidence: number;
+  let fraudConfidencePercentage: number;
+  
+  if (result.type === "url") {
+    // For URLs, safe results should show low fraud confidence
+    fraudConfidence = isFraud ? confidence : 0.05; // 5% baseline for safe URLs
+    fraudConfidencePercentage = Math.round(fraudConfidence * 100);
+  } else {
+    // For text and images, confidence represents certainty of the classification
+    if (isFraud) {
+      // If it's fraudulent, show the confidence as fraud percentage
+      fraudConfidence = confidence;
+    } else {
+      // If it's safe, show low fraud confidence (high safety confidence = low fraud confidence)
+      fraudConfidence = 1 - confidence;
+    }
+    fraudConfidencePercentage = Math.round(fraudConfidence * 100);
+  }
+
+  // Ensure percentage is within reasonable bounds
+  fraudConfidencePercentage = Math.max(5, Math.min(95, fraudConfidencePercentage));
 
 
   const handleReport = async () => {

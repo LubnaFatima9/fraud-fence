@@ -1,0 +1,161 @@
+/* Content Script Styles for Fraud Fence Extension */
+
+/* Warning banner animations and styles */
+@keyframes fraud-fence-pulse {
+    0%, 100% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+    50% { 
+        transform: scale(1.05); 
+        opacity: 0.8; 
+    }
+}
+
+@keyframes fraud-fence-glow {
+    0%, 100% { 
+        box-shadow: 0 0 5px rgba(255, 71, 87, 0.5); 
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(255, 71, 87, 0.8); 
+    }
+}
+
+/* Highlighted suspicious elements */
+.fraud-fence-highlighted {
+    animation: fraud-fence-pulse 2s ease-in-out infinite !important;
+}
+
+.fraud-fence-highlighted.severity-high {
+    animation: fraud-fence-glow 1.5s ease-in-out infinite !important;
+}
+
+/* Warning indicator styles */
+.fraud-fence-indicator {
+    animation: fraud-fence-pulse 1s ease-in-out infinite !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.fraud-fence-indicator:hover {
+    transform: scale(1.2) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+    .fraud-fence-banner-content {
+        flex-direction: column !important;
+        gap: 12px !important;
+        text-align: center !important;
+    }
+    
+    .fraud-fence-modal-content {
+        margin: 10px !important;
+        max-height: 90vh !important;
+    }
+    
+    .fraud-fence-modal-footer {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    .fraud-fence-btn-primary, 
+    .fraud-fence-btn-secondary {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+}
+
+/* Accessibility improvements */
+.fraud-fence-indicator:focus {
+    outline: 2px solid #ffffff !important;
+    outline-offset: 2px !important;
+}
+
+.fraud-fence-banner-actions button:focus,
+.fraud-fence-modal-close:focus,
+.fraud-fence-btn-primary:focus,
+.fraud-fence-btn-secondary:focus {
+    outline: 2px solid rgba(255,255,255,0.8) !important;
+    outline-offset: 2px !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .fraud-fence-modal-content {
+        background: #2d3748 !important;
+        color: #ffffff !important;
+    }
+    
+    .fraud-fence-modal-body {
+        color: #e2e8f0 !important;
+    }
+    
+    .fraud-fence-threat-item {
+        background: #4a5568 !important;
+        border-color: #718096 !important;
+        color: #ffffff !important;
+    }
+    
+    .fraud-fence-threat-item.severity-high {
+        background: #742a2a !important;
+    }
+    
+    .fraud-fence-threat-item.severity-medium {
+        background: #7c2d12 !important;
+    }
+    
+    .fraud-fence-threat-text {
+        color: #cbd5e0 !important;
+    }
+    
+    .fraud-fence-modal-footer {
+        background: #4a5568 !important;
+    }
+    
+    .fraud-fence-btn-secondary {
+        background: #4a5568 !important;
+        color: #e2e8f0 !important;
+        border-color: #718096 !important;
+    }
+}
+
+/* Print styles - hide extension elements when printing */
+@media print {
+    #fraud-fence-warning-banner,
+    #fraud-fence-modal,
+    .fraud-fence-indicator {
+        display: none !important;
+    }
+    
+    .fraud-fence-highlighted {
+        outline: none !important;
+        animation: none !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .fraud-fence-highlighted,
+    .fraud-fence-indicator,
+    #fraud-fence-warning-banner {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .fraud-fence-highlighted {
+        outline-width: 3px !important;
+    }
+    
+    .fraud-fence-indicator {
+        border: 2px solid #000000 !important;
+    }
+    
+    #fraud-fence-warning-banner {
+        border: 2px solid #000000 !important;
+    }
+}

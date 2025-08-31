@@ -1,0 +1,21 @@
+{
+  "name": "fraud-fence-extension-dev",
+  "version": "1.0.0",
+  "description": "Development tools for Fraud Fence Chrome Extension",
+  "scripts": {
+    "create-icons": "echo 'Please create icon files in icons/ folder - see icons/README.md'",
+    "validate": "echo 'Validating extension files...' && node validate-extension.js",
+    "package": "echo 'Creating extension package...' && zip -r fraud-fence-extension.zip . -x '*.git*' '*.DS_Store*' 'node_modules/*' 'package*.json' 'validate-extension.js'",
+    "lint": "echo 'Linting extension files...' && eslint *.js",
+    "dev-setup": "echo 'Setting up development environment...' && echo '1. Install icons (see icons/README.md)' && echo '2. Update API endpoints if needed' && echo '3. Load extension in Chrome (chrome://extensions/)'"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "keywords": [
+    "chrome-extension",
+    "fraud-detection",
+    "security",
+    "scam-protection"
+  ]
+}

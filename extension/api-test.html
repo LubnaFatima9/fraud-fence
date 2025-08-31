@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mixed API Test - Cogniflow + Google Safe Browsing</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .config { background: #f5f5f5; padding: 10px; border-radius: 3px; }
+        .success-config { background: #d4edda; padding: 10px; border-radius: 3px; border: 1px solid #c3e6cb; }
+        textarea { width: 100%; height: 100px; margin: 5px 0; }
+        input[type="text"] { width: 100%; margin: 5px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .loading { background: #d1ecf1; border: 1px solid #b8daff; }
+        .api-type { font-weight: bold; color: #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Mixed API Configuration Test</h1>
+    
+    <div class="success-config">
+        <h3>✅ Configuration Status: Ready to Test!</h3>
+        <p><strong>Text Analysis:</strong> <span class="api-type">Cogniflow API</span> - Your fraud detection model</p>
+        <p><strong>Image Analysis:</strong> <span class="api-type">Cogniflow API</span> - Your image classification model</p>
+        <p><strong>URL Analysis:</strong> <span class="api-type">Google Safe Browsing API</span> - Malicious URL detection</p>
+    </div>
+
+    <!-- Text Analysis Test -->
+    <div class="test-section">
+        <h2>📝 Text Fraud Analysis Test (Cogniflow)</h2>
+        <div class="config">
+            <p><strong>Model ID:</strong> b7562ba0-a75d-4001-9375-1f06f22e0b13</p>
+            <p><strong>API Key:</strong> cdc872e5-00ae-4d32-936c-a80bf6a889ce</p>
+        </div>
+        <div>
+            <label>Test Text:</label>
+            <textarea id="testText" placeholder="Enter text to analyze for fraud...">
+🚨 URGENT! You've won $1,000,000! Click this link immediately to claim your prize before it expires in 24 hours! No fees required, 100% guaranteed! Act now!
+            </textarea>
+        </div>
+        <button onclick="testTextAnalysis()">Test Text Analysis</button>
+        <div id="textResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Image Analysis Test -->
+    <div class="test-section">
+        <h2>🖼️ Image Fraud Analysis Test (Cogniflow)</h2>
+        <div class="config">
+            <p><strong>Model ID:</strong> ba056844-ddea-47fb-b6f5-9adcf567cbae</p>
+            <p><strong>API Key:</strong> 764ea05f-f623-4c7f-919b-dac6cf7223f3</p>
+        </div>
+        <div>
+            <label>Select Image:</label>
+            <input type="file" id="testImage" accept="image/*">
+        </div>
+        <button onclick="testImageAnalysis()">Test Image Analysis</button>
+        <div id="imageResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- URL Analysis Test -->
+    <div class="test-section">
+        <h2>🔗 URL Safety Test (Google Safe Browsing)</h2>
+        <div class="config">
+            <p><strong>API:</strong> Google Safe Browsing v4</p>
+            <p><strong>API Key:</strong> AIzaSyD7t6JWpS89dUelr1MXYJHcze2MnLTLmpY</p>
+        </div>
+        <div>
+            <label>Test URL:</label>
+            <input type="text" id="testUrl" placeholder="Enter URL to analyze..." value="https://testsafebrowsing.appspot.com/s/malware.html">
+        </div>
+        <button onclick="testUrlAnalysis()">Test URL Analysis</button>
+        <div id="urlResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Your actual API configuration
+        const API_BASE_URL = 'https://predict.cogniflow.ai';
+        const GOOGLE_SAFE_BROWSING_API_KEY = 'AIzaSyD7t6JWpS89dUelr1MXYJHcze2MnLTLmpY';
+        
+        const API_CONFIG = {
+            text: {
+                endpoint: `${API_BASE_URL}/text/classification/predict/b7562ba0-a75d-4001-9375-1f06f22e0b13`,
+                apiKey: 'cdc872e5-00ae-4d32-936c-a80bf6a889ce',
+                type: 'cogniflow'
+            },
+            image: {
+                endpoint: `${API_BASE_URL}/image/llm-classification/predict/ba056844-ddea-47fb-b6f5-9adcf567cbae`,
+                apiKey: '764ea05f-f623-4c7f-919b-dac6cf7223f3',
+                type: 'cogniflow'
+            },
+            url: {
+                endpoint: `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GOOGLE_SAFE_BROWSING_API_KEY}`,
+                apiKey: GOOGLE_SAFE_BROWSING_API_KEY,
+                type: 'google-safe-browsing'
+            }
+        };
+
+        async function testTextAnalysis() {
+            const text = document.getElementById('testText').value;
+            const resultDiv = document.getElementById('textResult');
+            const config = API_CONFIG.text;
+
+            showResult(resultDiv, '🔍 Testing text analysis with Cogniflow...', 'loading');
+
+            try {
+                const response = await fetch(config.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': config.apiKey
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                showResult(resultDiv, `✅ Cogniflow Text Analysis Success!\n\nResponse:\n${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (error) {
+                showResult(resultDiv, `❌ Text Analysis Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testImageAnalysis() {
+            const fileInput = document.getElementById('testImage');
+            const resultDiv = document.getElementById('imageResult');
+            const config = API_CONFIG.image;
+
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'Please select an image file', 'error');
+                return;
+            }
+
+            showResult(resultDiv, '🔍 Testing image analysis with Cogniflow...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                const response = await fetch(config.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': config.apiKey
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                showResult(resultDiv, `✅ Cogniflow Image Analysis Success!\n\nResponse:\n${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (error) {
+                showResult(resultDiv, `❌ Image Analysis Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUrlAnalysis() {
+            const url = document.getElementById('testUrl').value;
+            const resultDiv = document.getElementById('urlResult');
+            const config = API_CONFIG.url;
+
+            showResult(resultDiv, '🔍 Testing URL safety with Google Safe Browsing...', 'loading');
+
+            try {
+                const payload = {
+                    client: {
+                        clientId: "fraud-fence-extension-test",
+                        clientVersion: "1.0.0"
+                    },
+                    threatInfo: {
+                        threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+                        platformTypes: ["ANY_PLATFORM"],
+                        threatEntryTypes: ["URL"],
+                        threatEntries: [{ url: url }]
+                    }
+                };
+
+                const response = await fetch(config.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                // Transform result for display
+                const hasThreat = result.matches && result.matches.length > 0;
+                const transformedResult = {
+                    isFraud: hasThreat,
+                    confidence: hasThreat ? 95 : 5,
+                    riskLevel: hasThreat ? 'High Risk - Malicious URL detected' : 'Safe - No known threats',
+                    details: hasThreat ? `Threat detected: ${result.matches[0].threatType}` : 'URL appears safe',
+                    source: 'Google Safe Browsing',
+                    originalResponse: result
+                };
+
+                showResult(resultDiv, `✅ Google Safe Browsing Success!\n\nTransformed Result:\n${JSON.stringify(transformedResult, null, 2)}`, 'success');
+            } catch (error) {
+                showResult(resultDiv, `❌ URL Analysis Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(div, message, type) {
+            div.style.display = 'block';
+            div.className = `result ${type}`;
+            div.innerHTML = `<pre>${message}</pre>`;
+        }
+    </script>
+</body>
+</html>

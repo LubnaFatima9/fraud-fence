@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fraud Fence</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <img src="icons/icon32.png" alt="Fraud Fence" class="logo-icon">
+                <h1>Fraud Fence</h1>
+            </div>
+            <p class="subtitle">Detect fraud, scams & suspicious content</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="text">Text</button>
+            <button class="tab-btn" data-tab="url">URL</button>
+            <button class="tab-btn" data-tab="image">Image</button>
+            <button class="tab-btn" data-tab="history">History</button>
+        </div>
+
+        <!-- Text Analysis Tab -->
+        <div class="tab-content active" id="text-tab">
+            <div class="input-section">
+                <label for="text-input">Paste suspicious text:</label>
+                <textarea id="text-input" placeholder="Paste text to analyze for fraud..."></textarea>
+                <button id="analyze-text-btn" class="analyze-btn">Analyze Text</button>
+            </div>
+        </div>
+
+        <!-- Image Analysis Tab -->
+        <div class="tab-content" id="image-tab">
+            <div class="input-section">
+                <label for="image-input">Upload suspicious image:</label>
+                <div class="file-upload-area" id="image-upload-area">
+                    <input type="file" id="image-input" accept="image/*" style="display: none;">
+                    <div class="upload-placeholder">
+                        <span class="upload-icon">📁</span>
+                        <p>Click to upload or drag & drop</p>
+                        <small>Supports: JPG, PNG, GIF, WebP</small>
+                    </div>
+                    <div class="image-preview" id="image-preview" style="display: none;"></div>
+                </div>
+                <button id="analyze-image-btn" class="analyze-btn" disabled>Analyze Image</button>
+            </div>
+        </div>
+
+        <!-- URL Analysis Tab -->
+        <div class="tab-content" id="url-tab">
+            <!-- Real-time URL check for current tab -->
+            <div class="current-url-check" id="current-url-check">
+                <div class="current-url-header">
+                    <h3>Current Page Analysis</h3>
+                    <div class="url-status" id="current-url-status">
+                        <div class="status-loading">
+                            <div class="spinner-small"></div>
+                            <span>Checking current page...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="current-url-details" id="current-url-details"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="input-section">
+                <label for="url-input">Or check a different URL:</label>
+                <input type="url" id="url-input" placeholder="https://example.com">
+                <button id="analyze-url-btn" class="analyze-btn">Analyze URL</button>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-content" id="history-tab">
+            <div class="history-section">
+                <div class="history-header">
+                    <h3>Recent Checks</h3>
+                    <button id="clear-history-btn" class="clear-btn">Clear All</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <div class="history-empty" id="history-empty">
+                        <div class="empty-icon">📊</div>
+                        <p>No fraud checks yet</p>
+                        <small>Your analysis history will appear here</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Analyzing content...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results" id="results" style="display: none;">
+            <div class="result-header">
+                <div class="result-status" id="result-status"></div>
+                <div class="result-score" id="result-score"></div>
+            </div>
+            <div class="result-details" id="result-details"></div>
+            <div class="result-actions">
+                <button id="clear-results" class="secondary-btn">Clear Results</button>
+                <button id="report-false-positive" class="secondary-btn">Report Issue</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <a href="https://fraud-fence.vercel.app" target="_blank" class="footer-link">
+                Visit Fraud Fence Website
+            </a>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

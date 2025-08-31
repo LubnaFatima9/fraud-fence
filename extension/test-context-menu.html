@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Fence Extension Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-text {
+            background: #fff3cd;
+            padding: 15px;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            margin: 10px 0;
+            user-select: text;
+        }
+        .test-image {
+            max-width: 200px;
+            height: auto;
+            border: 2px dashed #007bff;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .test-link {
+            display: block;
+            color: #007bff;
+            text-decoration: underline;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e7f3ff;
+            border-radius: 4px;
+        }
+        .instructions {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Fraud Fence Extension Test Page</h1>
+    
+    <div class="instructions">
+        <strong>Testing Instructions:</strong>
+        <ol>
+            <li>Make sure the Fraud Fence extension is loaded in Chrome</li>
+            <li>Open Developer Tools (F12) and go to Console tab</li>
+            <li>Try each test below and check for console messages</li>
+            <li>Look for notifications that should appear when right-clicking</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>1. Test Text Analysis</h2>
+        <div class="instructions">
+            <strong>How to test:</strong> Select the text below, then right-click and look for "Check for Fraud" or "Analyze selected text" options.
+        </div>
+        
+        <div class="test-text">
+            Congratulations! You have won $1,000,000! Click here to claim your prize immediately. Act now, limited time offer! Verify your account details to receive your winnings.
+        </div>
+        
+        <div class="test-text">
+            Your account has been suspended due to suspicious activity. Please verify your identity immediately by clicking this link to avoid permanent closure.
+        </div>
+        
+        <div class="debug-info">
+            Expected behavior: Right-click on selected text → Context menu appears → Click "Check for Fraud" → Notification shows → Extension popup opens with results
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Image Analysis</h2>
+        <div class="instructions">
+            <strong>How to test:</strong> Right-click on the image below and look for "Analyze image for fraud" option.
+        </div>
+        
+        <img src="https://via.placeholder.com/300x200/ff6b6b/ffffff?text=Test+Image+for+Fraud+Detection" 
+             alt="Test Image" 
+             class="test-image">
+        
+        <div class="debug-info">
+            Expected behavior: Right-click on image → Context menu appears → Click "Analyze image for fraud" → Notification shows → Extension popup opens with results
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Link Analysis</h2>
+        <div class="instructions">
+            <strong>How to test:</strong> Right-click on the link below and look for "Check link safety" option.
+        </div>
+        
+        <a href="https://bit.ly/suspicious-link-test" class="test-link">
+            🔗 Suspicious shortened link (bit.ly/suspicious-link-test)
+        </a>
+        
+        <a href="https://example-phishing-site.com/login" class="test-link">
+            🔗 Potential phishing link (example-phishing-site.com/login)
+        </a>
+        
+        <div class="debug-info">
+            Expected behavior: Right-click on link → Context menu appears → Click "Check link safety" → Notification shows → Extension popup opens with results
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test Page Scan</h2>
+        <div class="instructions">
+            <strong>How to test:</strong> Right-click anywhere on this page (not on text, images, or links) and look for "Scan page for scams" option.
+        </div>
+        
+        <div class="debug-info">
+            Expected behavior: Right-click on empty space → Context menu appears → Click "Scan page for scams" → Notification shows → Extension popup opens with results
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🐛 Debugging Checklist</h2>
+        <div class="instructions">
+            <strong>If context menus don't appear, check:</strong>
+            <ol>
+                <li><strong>Extension Status:</strong> Go to chrome://extensions/ and ensure "Fraud Fence" is enabled</li>
+                <li><strong>Console Logs:</strong> Open F12 Developer Tools, check Console for error messages</li>
+                <li><strong>Background Script:</strong> In chrome://extensions/, click on "Inspect views: service worker" to see background script logs</li>
+                <li><strong>Permissions:</strong> Make sure the extension has contextMenus permission in manifest.json</li>
+                <li><strong>Context Menu Creation:</strong> Look for console logs like "✅ Context menus created"</li>
+            </ol>
+        </div>
+        
+        <div class="debug-info">
+            <strong>Common Issues:</strong><br>
+            • Extension not properly loaded → Reload extension in chrome://extensions/<br>
+            • Service worker stopped → Click "Inspect views: service worker" to restart<br>
+            • Context menu not created → Check background script console for errors<br>
+            • Click handler not working → Verify context menu IDs match in code<br>
+        </div>
+    </div>
+
+    <script>
+        // Add some client-side logging
+        console.log('🧪 Fraud Fence test page loaded');
+        console.log('📍 Current URL:', window.location.href);
+        
+        // Listen for extension messages (if any)
+        window.addEventListener('message', (event) => {
+            console.log('📨 Received message:', event);
+        });
+        
+        // Test if extension is responding
+        if (window.chrome && chrome.runtime) {
+            console.log('✅ Chrome runtime available');
+            console.log('🔧 Extension ID should appear in chrome://extensions/');
+        } else {
+            console.log('❌ Chrome runtime not available');
+        }
+    </script>
+</body>
+</html>

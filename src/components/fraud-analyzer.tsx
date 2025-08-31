@@ -178,10 +178,19 @@ export function FraudAnalyzer() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="text"><FileText className="mr-2 h-4 w-4"/>Text</TabsTrigger>
-            <TabsTrigger value="image"><FileImage className="mr-2 h-4 w-4"/>Image</TabsTrigger>
-            <TabsTrigger value="url"><LinkIcon className="mr-2 h-4 w-4"/>URL</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+            <TabsTrigger value="text" className="flex-1 text-xs sm:text-sm py-2 px-2 sm:px-4">
+              <FileText className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/>
+              <span className="hidden xs:inline sm:inline">Text</span>
+            </TabsTrigger>
+            <TabsTrigger value="image" className="flex-1 text-xs sm:text-sm py-2 px-2 sm:px-4">
+              <FileImage className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/>
+              <span className="hidden xs:inline sm:inline">Image</span>
+            </TabsTrigger>
+            <TabsTrigger value="url" className="flex-1 text-xs sm:text-sm py-2 px-2 sm:px-4">
+              <LinkIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/>
+              <span className="hidden xs:inline sm:inline">URL</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="text" className="mt-4">
