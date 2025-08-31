@@ -1,39 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-function analyzeImageSimple(imageBase64: string) {
-  // Simple heuristics based on image data
-  const imageSize = imageBase64.length;
-  
-  // For now, return a basic analysis
-  // In a real implementation, you could analyze image metadata, size patterns, etc.
-  const isVerySmall = imageSize < 5000; // Very small images might be suspicious
-  const isVeryLarge = imageSize > 2000000; // Very large images are less likely to be spam
-  
-  let fraudScore = 25; // Default medium-low risk
-  let details = 'Image analysis complete. ';
-  
-  if (isVerySmall) {
-    fraudScore += 20;
-    details += 'Small image size may indicate low-quality content. ';
-  }
-  
-  if (isVeryLarge) {
-    fraudScore -= 15;
-    details += 'High-quality image suggests legitimate content. ';
-  }
-  
-  // Random small variation to make it seem more realistic
-  fraudScore += Math.floor(Math.random() * 10) - 5;
-  fraudScore = Math.max(5, Math.min(85, fraudScore));
-  
-  details += 'No obvious fraud indicators detected in image structure.';
-  
-  return {
-    isFraud: fraudScore > 50,
-    confidence: fraudScore,
-    details: details.trim()
-  };
-}
+import { analyzeImageForFraud } from '@/ai/flows/analyze-image-fraud';
 
 export async function POST(request: NextRequest) {
   try {
@@ -89,17 +55,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Analyze the image using simple pattern matching
-    const result = analyzeImageSimple(imageData);
+    // Create data URI format expected by the AI flow
+    // Assume JPEG if not specified - you might want to detect the actual MIME type
+    const mimeType = 'image/jpeg'; // Default, could be enhanced to detect actual type
+    const photoDataUri = `data:${mimeType};base64,${imageData}`;
 
-    // Return the format expected by Chrome extension and frontend
+    // Analyze the image using the AI flow
+    const result = await analyzeImageForFraud({ 
+      photoDataUri: photoDataUri
+    });
+
+    // Transform the result to match the expected Chrome extension format
     return NextResponse.json({
-      isFraud: result.isFraud,
-      confidence: result.confidence,
-      riskLevel: result.confidence > 80 ? 'high' : result.confidence > 50 ? 'medium' : 'low',
-      details: result.details,
-      analysis: result.details,
-      source: 'Image Structure Analysis'
+      isFraud: result.isFraudulent,
+      confidence: Math.round(result.confidenceScore * 100), // Convert to percentage
+      riskLevel: result.confidenceScore > 0.8 ? 'high' : result.confidenceScore > 0.5 ? 'medium' : 'low',
+      details: result.explanation,
+      analysis: result.explanation,
+      source: 'AI Image Analysis'
     });
 
   } catch (error) {

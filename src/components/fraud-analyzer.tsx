@@ -34,6 +34,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { analyzeTextForFraud } from "@/ai/flows/analyze-text-fraud";
+import { analyzeImageForFraud } from "@/ai/flows/analyze-image-fraud";
+import { analyzeUrlForFraud } from "@/ai/flows/analyze-url-fraud";
 import {
   AnalysisResult,
   type AnalysisResultData,
@@ -98,38 +101,15 @@ export function FraudAnalyzer() {
   }
 
   const handleAnalysis = async (
-    endpoint: string,
-    data: any,
+    analysisFn: (input: any) => Promise<any>,
+    input: any,
     type: TabValue
   ) => {
     setLoading(true);
     setResult(null);
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Transform API response to match the expected format
-      const analysisResult = {
-        isFraudulent: result.isFraud,
-        confidenceScore: result.confidence / 100, // Convert percentage to decimal
-        explanation: result.details || result.analysis,
-        type,
-        inputValue: type === 'image' ? data.fileName : (data.text || data.url)
-      };
-
-      setResult(analysisResult);
+      const response = await analysisFn(input);
+      setResult({ ...response, type, inputValue: type === 'image' ? input.fileName : (input.text || input.url) });
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
@@ -144,11 +124,11 @@ export function FraudAnalyzer() {
   };
 
   const onTextSubmit = (values: z.infer<typeof textSchema>) => {
-    handleAnalysis('/api/text-detect', { text: values.text }, "text");
+    handleAnalysis(analyzeTextForFraud, { text: values.text }, "text");
   };
 
   const onUrlSubmit = (values: z.infer<typeof urlSchema>) => {
-    handleAnalysis('/api/url-detect', { url: values.url }, "url");
+    handleAnalysis(analyzeUrlForFraud, { url: values.url }, "url");
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,56 +148,12 @@ export function FraudAnalyzer() {
     }
   };
 
-  const onImageSubmit = async () => {
+  const onImageSubmit = () => {
     if (!imageFile || !imagePreview) {
       toast({ variant: "destructive", title: "No image selected", description: "Please select an image to analyze." });
       return;
     }
-
-    // Convert image to base64 for API
-    const base64Image = imagePreview.split(',')[1]; // Remove data:image/jpeg;base64, prefix
-    
-    setLoading(true);
-    setResult(null);
-    
-    try {
-      const response = await fetch('/api/image-detect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image_base64: base64Image,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      // Transform API response to match the expected format
-      const analysisResult = {
-        isFraudulent: result.isFraud,
-        confidenceScore: result.confidence / 100, // Convert percentage to decimal
-        explanation: result.details || result.analysis,
-        type: "image" as TabValue,
-        inputValue: imageFile.name
-      };
-
-      setResult(analysisResult);
-    } catch (error) {
-      console.error("Image analysis error:", error);
-      toast({
-        variant: "destructive",
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-      });
-    } finally {
-      setLoading(false);
-    }
+    handleAnalysis(analyzeImageForFraud, { photoDataUri: imagePreview, fileName: imageFile.name }, "image");
   };
 
   const renderSubmitButton = (tab: TabValue) => (

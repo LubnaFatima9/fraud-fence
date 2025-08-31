@@ -1,36 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Simple fraud detection patterns for immediate functionality
-const FRAUD_PATTERNS = [
-  /win\s*[\$€£¥]\s*[\d,]+/i,
-  /congratulations.*you.*won/i,
-  /claim.*prize/i,
-  /urgent.*action.*required/i,
-  /click.*here.*now/i,
-  /limited.*time.*offer/i,
-  /act.*now/i,
-  /free.*money/i,
-  /nigerian.*prince/i,
-  /inheritance/i,
-  /lottery.*winner/i,
-  /tax.*refund/i,
-  /suspend.*account/i,
-  /verify.*account/i,
-  /secure.*your.*account/i
-];
-
-function analyzeTextSimple(text: string) {
-  const matches = FRAUD_PATTERNS.filter(pattern => pattern.test(text));
-  const fraudScore = Math.min(95, matches.length * 15 + (text.includes('$') ? 10 : 0));
-  
-  return {
-    isFraud: fraudScore > 30,
-    confidence: fraudScore > 0 ? Math.max(fraudScore, 20) : 5,
-    details: matches.length > 0 
-      ? `Detected ${matches.length} suspicious pattern(s) commonly used in fraud/scam messages`
-      : 'Text appears normal with no obvious fraud indicators'
-  };
-}
+import { analyzeTextForFraud } from '@/ai/flows/analyze-text-fraud';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,17 +20,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use simple pattern matching for now
-    const result = analyzeTextSimple(text);
+    // Analyze the text using the AI flow
+    const result = await analyzeTextForFraud({ text });
 
-    // Return the format expected by Chrome extension
+    // Transform the result to match the expected Chrome extension format
     return NextResponse.json({
-      isFraud: result.isFraud,
-      confidence: result.confidence,
-      riskLevel: result.confidence > 80 ? 'high' : result.confidence > 50 ? 'medium' : 'low',
-      details: result.details,
-      analysis: result.details,
-      source: 'Pattern Matching Analysis'
+      isFraud: result.isFraudulent,
+      confidence: Math.round(result.confidenceScore * 100), // Convert to percentage
+      riskLevel: result.confidenceScore > 0.8 ? 'high' : result.confidenceScore > 0.5 ? 'medium' : 'low',
+      details: result.explanation,
+      analysis: result.explanation,
+      source: 'AI Text Analysis'
     });
 
   } catch (error) {
