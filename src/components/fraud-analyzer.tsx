@@ -34,9 +34,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { analyzeTextForFraud } from "@/ai/flows/analyze-text-fraud";
-import { analyzeImageForFraud } from "@/ai/flows/analyze-image-fraud";
-import { analyzeUrlForFraud } from "@/ai/flows/analyze-url-fraud";
 import {
   AnalysisResult,
   type AnalysisResultData,
@@ -101,15 +98,36 @@ export function FraudAnalyzer() {
   }
 
   const handleAnalysis = async (
-    analysisFn: (input: any) => Promise<any>,
-    input: any,
+    apiEndpoint: string,
+    payload: any,
     type: TabValue
   ) => {
     setLoading(true);
     setResult(null);
     try {
-      const response = await analysisFn(input);
-      setResult({ ...response, type, inputValue: type === 'image' ? input.fileName : (input.text || input.url) });
+      console.log(`🚀 Calling ${apiEndpoint} with:`, payload);
+      
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `API request failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(`✅ ${apiEndpoint} response:`, result);
+      
+      setResult({ 
+        ...result, 
+        type, 
+        inputValue: type === 'image' ? payload.fileName : (payload.text || payload.url) 
+      });
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
@@ -124,11 +142,11 @@ export function FraudAnalyzer() {
   };
 
   const onTextSubmit = (values: z.infer<typeof textSchema>) => {
-    handleAnalysis(analyzeTextForFraud, { text: values.text }, "text");
+    handleAnalysis('/api/text-detect', { text: values.text }, "text");
   };
 
   const onUrlSubmit = (values: z.infer<typeof urlSchema>) => {
-    handleAnalysis(analyzeUrlForFraud, { url: values.url }, "url");
+    handleAnalysis('/api/url-detect', { url: values.url }, "url");
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +171,7 @@ export function FraudAnalyzer() {
       toast({ variant: "destructive", title: "No image selected", description: "Please select an image to analyze." });
       return;
     }
-    handleAnalysis(analyzeImageForFraud, { photoDataUri: imagePreview, fileName: imageFile.name }, "image");
+    handleAnalysis('/api/image-detect', { imageData: imagePreview, fileName: imageFile.name }, "image");
   };
 
   const renderSubmitButton = (tab: TabValue) => (

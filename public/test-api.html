@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fraud Analyzer API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        pre { white-space: pre-wrap; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <h1>Fraud Analyzer API Test</h1>
+    <button onclick="runTests()">Run All Tests</button>
+    <div id="results"></div>
+
+    <script>
+        async function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Running tests...</p>';
+            
+            let html = '';
+
+            // Test 1: Text Analysis
+            html += '<div class="test-section">';
+            html += '<h3>1. Text Analysis API</h3>';
+            try {
+                const response = await fetch('/api/text-detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: 'URGENT! You have won $1,000,000! Click this link immediately to claim your prize!'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    html += '<div class="success"><strong>✅ Success</strong></div>';
+                    html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorText = await response.text();
+                    html += '<div class="error"><strong>❌ Failed</strong></div>';
+                    html += '<p>Status: ' + response.status + ' ' + response.statusText + '</p>';
+                    html += '<pre>' + errorText + '</pre>';
+                }
+            } catch (error) {
+                html += '<div class="error"><strong>❌ Error</strong></div>';
+                html += '<p>' + error.message + '</p>';
+            }
+            html += '</div>';
+
+            // Test 2: URL Analysis
+            html += '<div class="test-section">';
+            html += '<h3>2. URL Analysis API</h3>';
+            try {
+                const response = await fetch('/api/url-detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: 'https://example.com/suspicious-url'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    html += '<div class="success"><strong>✅ Success</strong></div>';
+                    html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorText = await response.text();
+                    html += '<div class="error"><strong>❌ Failed</strong></div>';
+                    html += '<p>Status: ' + response.status + ' ' + response.statusText + '</p>';
+                    html += '<pre>' + errorText + '</pre>';
+                }
+            } catch (error) {
+                html += '<div class="error"><strong>❌ Error</strong></div>';
+                html += '<p>' + error.message + '</p>';
+            }
+            html += '</div>';
+
+            // Test 3: Image Analysis
+            html += '<div class="test-section">';
+            html += '<h3>3. Image Analysis API</h3>';
+            try {
+                const dummyImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                const response = await fetch('/api/image-detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageData: dummyImageData
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    html += '<div class="success"><strong>✅ Success</strong></div>';
+                    html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorText = await response.text();
+                    html += '<div class="error"><strong>❌ Failed</strong></div>';
+                    html += '<p>Status: ' + response.status + ' ' + response.statusText + '</p>';
+                    html += '<pre>' + errorText + '</pre>';
+                }
+            } catch (error) {
+                html += '<div class="error"><strong>❌ Error</strong></div>';
+                html += '<p>' + error.message + '</p>';
+            }
+            html += '</div>';
+
+            results.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
