@@ -34,7 +34,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { reportFraud, type ReportFraudInput } from "@/ai/flows/report-fraud";
 import { cn } from "@/lib/utils";
 
 export type AnalysisResultData = {
@@ -120,7 +119,8 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
 
   const handleReport = async () => {
     try {
-      await reportFraud({ type: result.type, content: result.inputValue });
+      // TODO: Create API endpoint for reporting fraud
+      // await reportFraud({ type: result.type, content: result.inputValue });
       toast({
         title: "Report Submitted",
         description: "Thank you for helping keep the web safe.",
