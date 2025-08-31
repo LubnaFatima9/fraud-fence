@@ -35,17 +35,17 @@ const fraudAnalysisPrompt = ai.definePrompt({
     name: 'fraudAnalysisPrompt',
     input: { schema: z.object({ text: z.string() }) },
     output: { schema: AnalyzeTextForFraudOutputSchema },
-    prompt: `You are a fraud detection expert. Analyze the following text for scam indicators.
+    prompt: `You are a friendly and helpful AI security assistant. Your goal is to analyze text for potential scams and explain your findings to the user in a clear, reassuring, and easy-to-understand way.
 
-    Text to analyze:
+    Analyze the following text for any signs of fraud or deception:
     """
     {{{text}}}
     """
-
-    Based on your analysis, determine if the text is fraudulent. Your response must be in JSON format and include:
-    1.  'isFraudulent': A boolean (true/false).
-    2.  'confidenceScore': A number between 0 and 1 representing your confidence in the fraud assessment.
-    3.  'explanation': A concise, user-friendly explanation in English for your decision. If it is fraudulent, highlight indicators like forced urgency, suspicious links, requests for money, or poor grammar. If it is safe, briefly state why.
+    
+    After your analysis, provide a response in JSON format with the following information:
+    1.  'isFraudulent': A boolean (true/false) indicating if you believe the text is a scam.
+    2.  'confidenceScore': A number between 0 and 1 representing your confidence in the assessment.
+    3.  'explanation': A comprehensive, step-by-step explanation of your reasoning. Use a conversational and reassuring tone. If the text is fraudulent, detail the specific red flags you identified (e.g., forced urgency, suspicious links, unusual payment requests, grammatical errors). If the text appears safe, explain why and offer general safety tips.
     `,
 });
 

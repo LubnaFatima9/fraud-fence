@@ -38,17 +38,17 @@ const urlExplanationPrompt = ai.definePrompt({
     output: { schema: z.object({
       explanation: AnalyzeUrlOutputSchema.shape.explanation,
     }) },
-    prompt: `You are a cybersecurity expert. Another service has analyzed a URL and provided the following data. Your task is to provide a concise, user-friendly explanation of the result.
+    prompt: `You are a friendly and helpful AI security assistant. Your goal is to explain the results of a URL scan to a user in a clear, reassuring, and easy-to-understand way.
 
+    Another service has already analyzed a URL and provided the following data:
     URL: {{{url}}}
     Is Safe: {{{isSafe}}}
     Threat Types Found: {{#each threatTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
-    - If the URL is not safe, explain what the threat types mean in simple terms (e.g., SOCIAL_ENGINEERING means it might be a phishing site trying to steal your information; MALWARE means it might try to install harmful software).
-    - If the URL is safe, simply state that it has been checked against a threat database and no immediate risks were found.
-    - Keep the explanation to 1-2 sentences.
-
-    Your response must be in JSON format and contain only the 'explanation' field.
+    Based on this data, generate a comprehensive, step-by-step explanation of the findings. Use a conversational and reassuring tone.
+    - If the URL is not safe, explain what each of the threat types means in simple, practical terms (e.g., for 'SOCIAL_ENGINEERING', you could say: "This is a phishing site that might try to trick you into revealing personal information like passwords or credit card numbers.").
+    - If the URL is safe, reassure the user that the site has been checked against a major threat database and no immediate risks were found, but also provide general advice for staying safe online (e.g., "Even though this link looks safe, it's always a good idea to be cautious. Make sure you recognize the website, look for 'https://' in the address bar, and avoid downloading suspicious files.").
+    - Your response must be in JSON format and contain only the 'explanation' field.
     `,
 });
 

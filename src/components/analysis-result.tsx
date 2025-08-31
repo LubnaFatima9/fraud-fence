@@ -95,24 +95,9 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   // Fix: Calculate fraud confidence correctly based on the analysis result
   // If it's fraud, show the confidence as-is
   // If it's safe, show how confident we are it's safe (not fraudulent)
-  let fraudConfidence: number;
-  let fraudConfidencePercentage: number;
-  
-  if (result.type === "url") {
-    // For URLs, safe results should show low fraud confidence
-    fraudConfidence = isFraud ? confidence : 0.05; // 5% baseline for safe URLs
-    fraudConfidencePercentage = Math.round(fraudConfidence * 100);
-  } else {
-    // For text and images, confidence represents certainty of the classification
-    if (isFraud) {
-      // If it's fraudulent, show the confidence as fraud percentage
-      fraudConfidence = confidence;
-    } else {
-      // If it's safe, show low fraud confidence (high safety confidence = low fraud confidence)
-      fraudConfidence = 1 - confidence;
-    }
-    fraudConfidencePercentage = Math.round(fraudConfidence * 100);
-  }
+  let fraudConfidence = isFraud ? confidence: 1 - confidence;
+
+  let fraudConfidencePercentage = Math.round(fraudConfidence * 100);
 
   // Ensure percentage is within reasonable bounds
   fraudConfidencePercentage = Math.max(5, Math.min(95, fraudConfidencePercentage));
@@ -165,10 +150,10 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {(result.type === "text" || result.type === "image") && (
+        {(result.type === "text" || result.type === "image" || result.type === "url") && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm font-medium">
-              <span>Fraud Confidence</span>
+              <span>Fraud Meter</span>
               <span style={{ color: getConfidenceColor(fraudConfidence) }}>
                 {fraudConfidencePercentage}%
               </span>

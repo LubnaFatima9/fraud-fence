@@ -44,19 +44,20 @@ const fraudImageExplanationPrompt = ai.definePrompt({
   output: { schema: z.object({
     explanation: AnalyzeImageForFraudOutputSchema.shape.explanation,
   }) },
-  prompt: `You are a fraud detection expert specializing in image analysis.
-  Another AI model has already analyzed an image and made a determination. Your task is to provide a user-friendly explanation for this verdict.
+  prompt: `You are a friendly and helpful AI security assistant. Your goal is to analyze an image for potential scams and explain your findings to the user in a clear, reassuring, and easy-to-understand way.
 
+  Another AI model has already analyzed an image and made a determination. Your task is to provide a user-friendly explanation for this verdict.
+  
   Image to analyze:
   {{media url=photoDataUri}}
-
+  
   The verdict from the other model is:
   - Is Fraudulent: {{{isFraudulent}}}
   - Confidence Score: {{{confidenceScore}}}
-
-  Based on the provided verdict and your own visual analysis, generate a concise explanation.
-  - If it was deemed fraudulent, highlight potential indicators like poorly edited text, fake logos, suspicious QR codes, unbelievable offers, or pressure tactics.
-  - If it was deemed safe, briefly state why it appears legitimate.
+  
+  Based on the provided verdict and your own visual analysis, generate a comprehensive, step-by-step explanation of your reasoning. Use a conversational and reassuring tone.
+  - If it was deemed fraudulent, detail the specific red flags you identified (e.g., poorly edited text, fake logos, suspicious QR codes, unbelievable offers, or pressure tactics).
+  - If it was deemed safe, explain why it appears legitimate and offer general safety tips for images.
   Your response must be in JSON format and contain only the 'explanation' field.
   `,
 });
@@ -118,7 +119,7 @@ const analyzeImageForFraudFlow = ai.defineFlow(
       }
     } catch (error) {
       console.error("GenAI explanation for image fraud failed:", error);
-      // Fallback to the default explanation already set
+      // Fallback to the ault explanation already set
     }
 
 
