@@ -1,9 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Rss, TrendingUp } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
 import Link from 'next/link';
 
 // Update NewsData to expect the formatted date
@@ -14,12 +13,6 @@ export type NewsData = Omit<BaseNewsData, 'articles'> & { articles: Article[] };
 
 export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
   const [news] = useState(initialNews);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    // This effect runs only on the client, after the initial render, to prevent hydration mismatch.
-    setIsClient(true);
-  }, []);
 
   const tickerText = news.tickerHeadlines.join(" • ");
 
@@ -69,10 +62,7 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span className="truncate mr-2 font-medium">{article.source.name}</span>
                             <time dateTime={article.publishedAt} className="shrink-0">
-                                {isClient
-                                  ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })
-                                  : article.formattedDate
-                                }
+                                {article.formattedDate}
                             </time>
                         </div>
                     </div>
