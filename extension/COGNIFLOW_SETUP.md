@@ -10,7 +10,7 @@ The Chrome extension has been configured to use a mixed API approach:
 Your extension is already configured with the following credentials:
 
 ### Text Analysis (Cogniflow)
-- **Model ID**: `b7562ba0-a75d-4001-9375-1f06f22e0b13`
+- **Model ID**: `69cd908d-f479-49f2-9984-eb6c5d462417`
 - **API Key**: `cdc872e5-00ae-4d32-936c-a80bf6a889ce`
 - **Endpoint**: `https://predict.cogniflow.ai/text/classification/predict/...`
 
@@ -29,7 +29,7 @@ Your extension is already configured with the following credentials:
 ### Cogniflow API Structure
 ```javascript
 // Text Analysis Request
-POST https://predict.cogniflow.ai/text/classification/predict/b7562ba0-a75d-4001-9375-1f06f22e0b13
+POST https://predict.cogniflow.ai/text/classification/predict/69cd908d-f479-49f2-9984-eb6c5d462417
 Headers: {
     "Content-Type": "application/json",
     "x-api-key": "cdc872e5-00ae-4d32-936c-a80bf6a889ce"
@@ -137,7 +137,7 @@ The extension uses these configuration constants:
 ```javascript
 const API_CONFIG = {
     text: {
-        endpoint: `${API_BASE_URL}/text/classification/predict/b7562ba0-a75d-4001-9375-1f06f22e0b13`,
+        endpoint: `${API_BASE_URL}/text/classification/predict/69cd908d-f479-49f2-9984-eb6c5d462417`,
         apiKey: 'cdc872e5-00ae-4d32-936c-a80bf6a889ce',
         type: 'cogniflow'
     },

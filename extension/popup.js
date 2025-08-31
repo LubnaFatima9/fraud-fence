@@ -4,7 +4,7 @@ const GOOGLE_SAFE_BROWSING_API_KEY = 'AIzaSyD7t6JWpS89dUelr1MXYJHcze2MnLTLmpY';
 
 const API_CONFIG = {
     text: {
-        endpoint: `${API_BASE_URL}/text/classification/predict/b7562ba0-a75d-4001-9375-1f06f22e0b13`,
+        endpoint: `${API_BASE_URL}/text/classification/predict/69cd908d-f479-49f2-9984-eb6c5d462417`,
         apiKey: 'cdc872e5-00ae-4d32-936c-a80bf6a889ce',
         type: 'cogniflow'
     },
