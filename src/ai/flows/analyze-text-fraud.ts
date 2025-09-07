@@ -45,15 +45,30 @@ const fraudAnalysisPrompt = ai.definePrompt({
     Provide a thorough analysis in JSON format with these fields:
     1. 'isFraudulent': Boolean indicating if this is likely a scam or fraud
     2. 'confidenceScore': Number 0-1 representing your confidence in the assessment
-    3. 'explanation': A comprehensive, educational explanation (minimum 200 words) covering:
-       - Overall assessment and reasoning
-       - Specific red flags or safety indicators identified
-       - Language patterns, urgency tactics, or psychological manipulation used
-       - Technical indicators (suspicious links, requests for information, etc.)
-       - Recommendations for the user
-       - Educational context about this type of scam (if applicable)
+    3. 'explanation': A comprehensive, well-structured explanation (minimum 200 words) using markdown formatting:
+    
+    Format your explanation with clear headings and structure:
+    ## Overall Assessment
+    - Provide your main conclusion about whether this is fraudulent or safe
+    
+    ## Key Indicators
+    - **Red Flags Detected**: List specific suspicious elements (use **bold** for emphasis)
+    - **Safety Signals**: Note any legitimate aspects if present
+    
+    ## Analysis Details
+    - **Language Patterns**: Urgency tactics, emotional manipulation, or professional language
+    - **Technical Elements**: Links, contact methods, requests for information
+    - **Psychological Tactics**: How scammers might be trying to influence the reader
+    
+    ## Recommendations
+    - **Immediate Actions**: What the user should do right now
+    - **General Advice**: How to avoid similar scams in the future
+    
+    ## Educational Context
+    - Brief explanation of this scam type and why it's effective
     
     Guidelines for explanations:
+    - Use **bold text** for important terms and key points
     - Use clear, conversational language
     - Be specific about what makes something suspicious or safe
     - Provide actionable advice for the user

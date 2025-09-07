@@ -1,5 +1,5 @@
 
-import { Github, Twitter, Linkedin } from 'lucide-react';
+import { Github, Youtube } from 'lucide-react';
 import Link from 'next/link';
 
 export function AppFooter() {
@@ -12,14 +12,11 @@ export function AppFooter() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="#" aria-label="Twitter">
-            <Twitter className="h-5 w-5 text-muted-foreground transition-colors hover:text-foreground" />
-          </Link>
-          <Link href="#" aria-label="GitHub">
+          <Link href="https://github.com/LubnaFatima9/fraud-fence.git" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
             <Github className="h-5 w-5 text-muted-foreground transition-colors hover:text-foreground" />
           </Link>
-          <Link href="#" aria-label="LinkedIn">
-            <Linkedin className="h-5 w-5 text-muted-foreground transition-colors hover:text-foreground" />
+          <Link href="https://www.youtube.com/@smartkid7390" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+            <Youtube className="h-5 w-5 text-muted-foreground transition-colors hover:text-foreground" />
           </Link>
         </div>
       </div>

@@ -53,34 +53,36 @@ const fraudImageExplanationPrompt = ai.definePrompt({
   Image to analyze:
   {{media url=photoDataUri}}
   
-  Provide a comprehensive, educational explanation (minimum 200 words) that includes:
+  Provide a comprehensive, well-structured explanation (minimum 200 words) using markdown formatting:
 
-  **Visual Analysis:**
-  - Examine image quality, consistency, and editing artifacts
-  - Assess text elements (fonts, alignment, grammar, language)
-  - Evaluate branding, logos, and design professionalism
-  - Look for common visual scam indicators
-
-  **If Fraudulent:**
-  - Specific red flags identified (poor editing, fake logos, suspicious QR codes)
-  - Analysis of urgency tactics or psychological manipulation in the image
-  - Common characteristics of this type of visual scam
-  - How scammers typically use such images
-  - Protective measures and warning signs to watch for
-
-  **If Safe:**
-  - Professional elements that indicate legitimacy
-  - Consistent branding and design quality
-  - Absence of common scam indicators
-  - General tips for identifying fraudulent images
-
-  **Educational Context:**
-  - Background on this type of image-based fraud (if applicable)
-  - Technical details about image manipulation detection
-  - Best practices for image verification
-  - Resources for reporting suspicious content
-
-  Use a professional yet accessible tone. Be specific about visual elements and provide actionable advice.
+  ## Overall Assessment
+  - Provide your main conclusion about whether this image is fraudulent or safe
+  
+  ## Visual Analysis
+  - **Image Quality**: Assess resolution, compression artifacts, and editing signs
+  - **Text Elements**: Evaluate fonts, alignment, grammar, and professional appearance
+  - **Branding & Design**: Check logos, colors, layout consistency and professionalism
+  - **Technical Indicators**: Look for manipulation artifacts, inconsistent lighting, or digital anomalies
+  
+  ## Key Findings
+  - **Red Flags Detected**: List specific suspicious visual elements (use **bold** for emphasis)
+  - **Legitimacy Indicators**: Note any professional or authentic aspects if present
+  
+  ## Detailed Analysis
+  - **Psychological Tactics**: How visual elements create urgency or manipulate emotions
+  - **Common Scam Patterns**: Typical characteristics of this type of visual fraud
+  - **Technical Details**: Specific editing artifacts or inconsistencies found
+  
+  ## Recommendations
+  - **Immediate Actions**: What the user should do with this image
+  - **Verification Tips**: How to check if similar images are legitimate
+  - **Prevention Advice**: How to spot similar visual scams in the future
+  
+  ## Educational Context
+  - Brief explanation of this type of visual fraud and why it's effective
+  - Technical background on image manipulation detection methods
+  
+  Use **bold text** for important terms, red flags, and key recommendations. Structure your response with clear headings for easy reading.
   Your response must be in JSON format containing only the 'explanation' field.
   Your response must be in JSON format and contain only the 'explanation' field.
   `,

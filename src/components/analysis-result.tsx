@@ -36,6 +36,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { reportFraud, type ReportFraudInput } from "@/ai/flows/report-fraud";
 import { saveFeedback, type FeedbackType } from "@/lib/feedback";
+import { formatMarkdownExplanation } from "@/lib/markdown-formatter";
 import { cn } from "@/lib/utils";
 
 export type AnalysisResultData = {
@@ -217,13 +218,13 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
            <CardHeader>
              <CardTitle className="flex items-center text-base font-medium">
                 <Info className="mr-2 h-5 w-5 text-primary" />
-                AI Explanation
+                AI Analysis Explanation
              </CardTitle>
            </CardHeader>
-           <CardContent>
-             <p className="text-sm text-muted-foreground">
-                {result.explanation}
-             </p>
+           <CardContent className="prose prose-sm max-w-none">
+             <div className="space-y-2 text-muted-foreground">
+                {formatMarkdownExplanation(result.explanation)}
+             </div>
            </CardContent>
          </Card>
         )}

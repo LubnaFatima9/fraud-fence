@@ -166,8 +166,8 @@ export default function GuidesPage() {
                          </div>
                          <div className="flex items-start gap-2">
                              <Globe className="mt-1 h-4 w-4 text-muted-foreground" />
-                            <ExtensionSafeExternalLink href="https://cybersecurity.telangana.gov.in/" className="text-primary underline hover:no-underline">
-                                Telangana Cyber Crime Portal
+                            <ExtensionSafeExternalLink href="https://tgcsb.tspolice.gov.in/" className="text-primary underline hover:no-underline">
+                                Telangana Cyber Security Bureau
                             </ExtensionSafeExternalLink>
                          </div>
                     </div>

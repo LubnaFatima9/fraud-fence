@@ -45,33 +45,48 @@ const urlExplanationPrompt = ai.definePrompt({
     - Safety Status: {{{isSafe}}} (true = safe, false = threat detected)
     - Identified Threats: {{#each threatTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
-    Provide a detailed, educational explanation (minimum 150 words) covering:
+    Provide a comprehensive, well-structured analysis (minimum 200 words) using markdown formatting:
 
-    **If URL is Safe:**
-    - Confirmation that the URL passed security screening
-    - What the security check evaluated (malware, phishing, etc.)
-    - General web safety best practices
-    - Signs to watch for when browsing
-    - How to verify website authenticity
+    ## Overall Assessment
+    - Provide your main conclusion about whether this URL is safe or dangerous
 
-    **If URL is Dangerous:**
-    - Clear explanation of each threat type found:
-      * MALWARE: Sites that install harmful software
-      * SOCIAL_ENGINEERING: Phishing sites stealing personal info
-      * UNWANTED_SOFTWARE: Sites pushing unwanted downloads
-      * POTENTIALLY_HARMFUL_APPLICATION: Apps that may harm your device
-    - Specific risks associated with visiting this URL
-    - Protective measures to take immediately
-    - How these threats typically operate
-    - Steps for reporting malicious URLs
+    ## Security Analysis Results
+    - **Safety Status**: {{{isSafe}}} - Clear explanation of what this means
+    - **Threat Detection**: Summary of identified threats or clean status
+    - **Risk Level**: Assessment of potential harm from this URL
 
-    **Always Include:**
-    - Technical context about URL analysis
-    - Best practices for safe browsing
-    - Warning signs of dangerous websites
-    - Resources for additional protection
+    ## Detailed Findings
+    {{#if isSafe}}
+    - **Security Verification**: What security checks this URL passed
+    - **Legitimacy Indicators**: Professional characteristics that suggest safety
+    - **Trust Signals**: SSL certificates, domain reputation, and other positive markers
+    {{else}}
+    - **Threat Types Detected**: Detailed explanation of each threat:
+      * **MALWARE**: Sites that install harmful software on your device
+      * **SOCIAL_ENGINEERING**: Phishing sites designed to steal personal information
+      * **UNWANTED_SOFTWARE**: Sites that push unwanted or bundled downloads
+      * **POTENTIALLY_HARMFUL_APPLICATION**: Apps that may compromise device security
+    - **Specific Risks**: What could happen if you visit this URL
+    - **Attack Methods**: How these threats typically operate and target users
+    {{/if}}
 
-    Use clear, actionable language. Be thorough and educational while remaining accessible.
+    ## Recommendations
+    {{#if isSafe}}
+    - **Safe Browsing**: General tips for maintaining web security
+    - **Verification Methods**: How to double-check website authenticity
+    - **Best Practices**: Ongoing protection strategies for web browsing
+    {{else}}
+    - **Immediate Actions**: **Do not visit this URL** - steps to take right now
+    - **Protection Measures**: How to secure your devices and accounts
+    - **Reporting**: How to report this malicious URL to security authorities
+    {{/if}}
+
+    ## Educational Context
+    - **Technical Background**: How URL security analysis works
+    - **Common Tactics**: Typical methods used by malicious websites
+    - **Prevention Tips**: **Red flags** to watch for in suspicious URLs
+
+    Use **bold text** for important warnings, threat types, and key recommendations. Structure your response with clear headings for easy reading.
     Your response must be in JSON format containing only the 'explanation' field.
     `,
 });
