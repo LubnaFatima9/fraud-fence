@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extension API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; white-space: pre-wrap; }
+        .error { background: #fee; border-left: 4px solid #f00; }
+        .success { background: #efe; border-left: 4px solid #0f0; }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Browser Extension API Test</h1>
+    
+    <div class="test-section">
+        <h2>Text Analysis Test</h2>
+        <button onclick="testTextAnalysis()">Test Text API</button>
+        <div id="textResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>URL Analysis Test</h2>
+        <button onclick="testUrlAnalysis()">Test URL API</button>
+        <div id="urlResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Image Analysis Test</h2>
+        <button onclick="testImageAnalysis()">Test Image API</button>
+        <div id="imageResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testTextAnalysis() {
+            const resultDiv = document.getElementById('textResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                console.log('🧪 Testing text analysis API...');
+                const response = await fetch('http://localhost:9005/api/text-detect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    body: JSON.stringify({
+                        text: 'URGENT! You have won $1,000,000! Click here immediately to claim your prize!'
+                    })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `SUCCESS (${response.status}):\n${JSON.stringify(data, null, 2)}`;
+                console.log('✅ Text analysis success:', data);
+            } catch (error) {
+                console.error('❌ Text analysis error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `ERROR: ${error.message}`;
+            }
+        }
+
+        async function testUrlAnalysis() {
+            const resultDiv = document.getElementById('urlResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                console.log('🧪 Testing URL analysis API...');
+                const response = await fetch('http://localhost:9005/api/url-detect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    body: JSON.stringify({
+                        url: 'https://example-phishing-site.com'
+                    })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `SUCCESS (${response.status}):\n${JSON.stringify(data, null, 2)}`;
+                console.log('✅ URL analysis success:', data);
+            } catch (error) {
+                console.error('❌ URL analysis error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `ERROR: ${error.message}`;
+            }
+        }
+
+        async function testImageAnalysis() {
+            const resultDiv = document.getElementById('imageResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                // Create a test image
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(0, 0, 100, 100);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '16px Arial';
+                ctx.fillText('SCAM', 25, 55);
+                
+                const imageData = canvas.toDataURL('image/png');
+                
+                console.log('🧪 Testing image analysis API...');
+                const response = await fetch('http://localhost:9005/api/image-detect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    body: JSON.stringify({
+                        imageData: imageData
+                    })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `SUCCESS (${response.status}):\n${JSON.stringify(data, null, 2)}`;
+                console.log('✅ Image analysis success:', data);
+            } catch (error) {
+                console.error('❌ Image analysis error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `ERROR: ${error.message}`;
+            }
+        }
+
+        // Test on page load
+        window.addEventListener('load', () => {
+            console.log('🚀 Extension API Test Page Loaded');
+            console.log('📍 Current origin:', window.location.origin);
+        });
+    </script>
+</body>
+</html>

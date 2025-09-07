@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test for Fraud Fence API</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+        pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔒 CORS Test for Fraud Fence API</h1>
+    <p>This page tests cross-origin requests to the Fraud Fence API endpoints from a different origin.</p>
+    
+    <div class="test-section">
+        <h3>Test Configuration</h3>
+        <p><strong>API Base URL:</strong> <span id="apiUrl">http://localhost:9005</span></p>
+        <p><strong>Test Origin:</strong> <span id="currentOrigin">Loading...</span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>1. Test Text Analysis API</h3>
+        <button onclick="testTextAnalysis()">Test Text Analysis</button>
+        <div id="textResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test URL Analysis API</h3>
+        <button onclick="testUrlAnalysis()">Test URL Analysis</button>
+        <div id="urlResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Image Analysis API</h3>
+        <button onclick="testImageAnalysis()">Test Image Analysis</button>
+        <div id="imageResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Test CORS Preflight (OPTIONS)</h3>
+        <button onclick="testCorsPrelight()">Test CORS Preflight</button>
+        <div id="corsResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9005';
+        
+        // Show current origin
+        document.getElementById('currentOrigin').textContent = window.location.origin;
+        
+        function showResult(elementId, success, message, data = null) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (success ? 'success' : 'error');
+            
+            let html = `<strong>${success ? '✅ Success' : '❌ Error'}</strong><br>${message}`;
+            if (data) {
+                html += `<br><strong>Response:</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            element.innerHTML = html;
+        }
+
+        async function testTextAnalysis() {
+            try {
+                console.log('Testing text analysis...');
+                const response = await fetch(`${API_BASE}/api/text-detect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: 'This is a test message for CORS verification'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('textResult', true, 'Text analysis API working with CORS!', data);
+                } else {
+                    const errorData = await response.text();
+                    showResult('textResult', false, `HTTP ${response.status}: ${response.statusText}`, errorData);
+                }
+            } catch (error) {
+                showResult('textResult', false, `Network error: ${error.message}`);
+            }
+        }
+
+        async function testUrlAnalysis() {
+            try {
+                console.log('Testing URL analysis...');
+                const response = await fetch(`${API_BASE}/api/url-detect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: 'https://example.com/test-url'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('urlResult', true, 'URL analysis API working with CORS!', data);
+                } else {
+                    const errorData = await response.text();
+                    showResult('urlResult', false, `HTTP ${response.status}: ${response.statusText}`, errorData);
+                }
+            } catch (error) {
+                showResult('urlResult', false, `Network error: ${error.message}`);
+            }
+        }
+
+        async function testImageAnalysis() {
+            try {
+                console.log('Testing image analysis...');
+                // Create a small test image data URI
+                const testImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                
+                const response = await fetch(`${API_BASE}/api/image-detect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        imageData: testImageData
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('imageResult', true, 'Image analysis API working with CORS!', data);
+                } else {
+                    const errorData = await response.text();
+                    showResult('imageResult', false, `HTTP ${response.status}: ${response.statusText}`, errorData);
+                }
+            } catch (error) {
+                showResult('imageResult', false, `Network error: ${error.message}`);
+            }
+        }
+
+        async function testCorsPrelight() {
+            try {
+                console.log('Testing CORS preflight...');
+                const response = await fetch(`${API_BASE}/api/text-detect`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+
+                const headers = {};
+                for (let [key, value] of response.headers.entries()) {
+                    headers[key] = value;
+                }
+
+                if (response.ok) {
+                    showResult('corsResult', true, 'CORS preflight successful!', { 
+                        status: response.status,
+                        headers: headers 
+                    });
+                } else {
+                    showResult('corsResult', false, `CORS preflight failed: ${response.status} ${response.statusText}`, {
+                        status: response.status,
+                        headers: headers
+                    });
+                }
+            } catch (error) {
+                showResult('corsResult', false, `CORS preflight error: ${error.message}`);
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            console.log('Page loaded, ready for CORS testing');
+        });
+    </script>
+</body>
+</html>

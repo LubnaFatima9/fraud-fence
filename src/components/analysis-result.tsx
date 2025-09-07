@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { reportFraud, type ReportFraudInput } from "@/ai/flows/report-fraud";
+import { saveFeedback, type FeedbackType } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 
 export type AnalysisResultData = {
@@ -118,6 +119,13 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
   const handleReport = async () => {
     try {
       await reportFraud({ type: result.type, content: result.inputValue });
+      
+      // Save feedback to localStorage
+      saveFeedback({
+        type: 'report-fraud',
+        analysisResult: result,
+      });
+      
       toast({
         title: "Report Submitted",
         description: "Thank you for helping keep the web safe.",
@@ -129,6 +137,28 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
         description: "Could not submit your report. Please try again.",
       });
       console.error("Report error:", error);
+    }
+  };
+
+  const handleNotScamFeedback = async () => {
+    try {
+      // Save feedback to localStorage
+      saveFeedback({
+        type: 'not-scam',
+        analysisResult: result,
+      });
+      
+      toast({
+        title: "Feedback Received",
+        description: "Thank you for your feedback! This helps us improve our detection accuracy.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Feedback Failed",
+        description: "Could not save your feedback. Please try again.",
+      });
+      console.error("Feedback error:", error);
     }
   };
 
@@ -227,10 +257,11 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
           </CardContent>
         </Card>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col gap-3 sm:flex-row">
+        {/* Report as Fraud Button */}
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full">
+            <Button variant="destructive" className="w-full sm:w-auto">
               Report as Fraud
             </Button>
           </AlertDialogTrigger>
@@ -246,6 +277,29 @@ export const AnalysisResult: FC<AnalysisResultProps> = ({ result }) => {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleReport}>
                 Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Not a Scam Feedback Button */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto">
+              Not a scam? Let us know
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Help us improve</AlertDialogTitle>
+              <AlertDialogDescription>
+                Did our AI get it wrong? Your feedback helps us improve our fraud detection accuracy and reduce false positives.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleNotScamFeedback}>
+                Submit Feedback
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

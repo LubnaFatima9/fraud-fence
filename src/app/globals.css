@@ -82,5 +82,24 @@
   .dark body {
     background-image: linear-gradient(to right, #430d43, #210a55, #0b0f3b, #000820, #000000);
   }
+
+  /* Browser extension compatibility */
+  .fraud-fence-highlighted {
+    /* Reset any extension styling that might interfere */
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .fraud-fence-indicator {
+    /* Ensure extension indicators don't break layout */
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Prevent hydration mismatches from extension modifications */
+  [data-extension-modified] {
+    /* Allow extensions to modify without breaking React */
+    transition: none !important;
+  }
 }
     

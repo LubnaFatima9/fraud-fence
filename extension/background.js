@@ -1,25 +1,21 @@
 // Background Script for Fraud Fence Extension
 // Handles context menus, API requests, and communication between scripts
 
-// API Configuration - Mixed APIs (Cogniflow + Google Safe Browsing)
-const API_BASE_URL = 'https://predict.cogniflow.ai';
-const GOOGLE_SAFE_BROWSING_API_KEY = 'AIzaSyD7t6JWpS89dUelr1MXYJHcze2MnLTLmpY';
+// API Configuration - Using local Next.js API endpoints
+const LOCAL_API_BASE = 'http://localhost:9005/api';
 
 const API_CONFIG = {
     text: {
-        endpoint: `${API_BASE_URL}/text/classification/predict/69cd908d-f479-49f2-9984-eb6c5d462417`,
-        apiKey: 'cdc872e5-00ae-4d32-936c-a80bf6a889ce',
-        type: 'cogniflow'
+        endpoint: `${LOCAL_API_BASE}/text-detect`,
+        type: 'local-api'
     },
     image: {
-        endpoint: `${API_BASE_URL}/image/llm-classification/predict/ba056844-ddea-47fb-b6f5-9adcf567cbae`,
-        apiKey: '764ea05f-f623-4c7f-919b-dac6cf7223f3',
-        type: 'cogniflow'
+        endpoint: `${LOCAL_API_BASE}/image-detect`,
+        type: 'local-api'
     },
     url: {
-        endpoint: `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GOOGLE_SAFE_BROWSING_API_KEY}`,
-        apiKey: GOOGLE_SAFE_BROWSING_API_KEY,
-        type: 'google-safe-browsing'
+        endpoint: `${LOCAL_API_BASE}/url-detect`,
+        type: 'local-api'
     }
 };
 
@@ -246,25 +242,25 @@ async function handleImageAnalysis(imageUrl, tab) {
     showNotification('Analyzing...', 'Checking image for fraudulent content.');
 
     try {
-        // Always use JSON base64 payload (previous 422 shows server expects JSON not multipart)
+        console.log('🖼️ Starting image analysis for URL:', imageUrl);
+        
+        // Download the image and convert to data URL
         const imageBlob = await downloadImage(imageUrl);
         console.log('🖼️ Image blob downloaded, size(bytes):', imageBlob.size);
-        const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+        
+        // Convert blob to data URL
+        const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
             reader.onerror = reject;
             reader.readAsDataURL(blob);
         });
-        const dataUrl = await blobToBase64(imageBlob);
-        const base64 = dataUrl.split(',')[1];
-        const payload = {
-            image_base64: base64,
-            image: base64,              // alternate key some APIs accept
-            format: 'base64',           // REQUIRED by API (422 complained about missing format)
-            prompt: 'Analyze this image for fraud, scam, phishing, deceptive or suspicious indicators'
-        };
-        console.log('📤 Sending image JSON payload (keys):', Object.keys(payload));
-        const result = await analyzeContent('image', payload);
+        
+        const dataUrl = await blobToDataUrl(imageBlob);
+        console.log('🖼️ Image converted to data URL, length:', dataUrl.length);
+        
+        // Call the local API with the data URL
+        const result = await analyzeContent('image', { imageData: dataUrl });
         
         const title = result.isFraud ? '🚨 Suspicious Image!' : '✅ Image Looks Safe';
         const message = `${Math.round(result.confidence)}% confidence - ${result.riskLevel}`;
@@ -291,7 +287,7 @@ async function handleImageAnalysis(imageUrl, tab) {
         });
         
     } catch (error) {
-        console.error('Image analysis failed:', error);
+        console.error('❌ Image analysis failed:', error);
         showNotification('Analysis Failed', `Could not analyze the image: ${error.message}`);
     }
 }
@@ -434,7 +430,7 @@ async function handlePageScan(tab) {
 }
 
 /**
- * Make API request to analyze content using mixed APIs (Cogniflow + Google Safe Browsing)
+ * Make API request to analyze content using local Next.js API endpoints
  */
 async function analyzeContent(type, data) {
     console.log('🌐 analyzeContent called with:', { type, data });
@@ -446,246 +442,81 @@ async function analyzeContent(type, data) {
     }
     console.log('⚙️ Using API config:', { endpoint: config.endpoint, type: config.type });
     
-    let options;
+    let requestBody;
     
-    if (config.type === 'google-safe-browsing') {
-        // Handle URL analysis with Google Safe Browsing API
-        const url = data.url || data.text || data;
-        const payload = {
-            client: {
-                clientId: "fraud-fence-extension",
-                clientVersion: "1.0.0"
-            },
-            threatInfo: {
-                threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
-                platformTypes: ["ANY_PLATFORM"],
-                threatEntryTypes: ["URL"],
-                threatEntries: [{ url: url }]
+    // Prepare request body based on analysis type
+    switch (type) {
+        case 'text':
+            requestBody = { text: data.text || data };
+            break;
+        case 'image':
+            // For image analysis, data should contain imageData (base64 data URL)
+            if (data.image_base64) {
+                // Convert base64 to data URL format if needed
+                const imageData = data.image_base64.startsWith('data:') ? 
+                    data.image_base64 : 
+                    `data:image/jpeg;base64,${data.image_base64}`;
+                requestBody = { imageData };
+            } else if (data.imageData) {
+                requestBody = { imageData: data.imageData };
+            } else {
+                throw new Error('No image data provided for image analysis');
             }
-        };
-        
-        options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        };
-    } else if (type === 'image') {
-        // --- Image analysis branch with adaptive payload strategy ---
-        // Convert FormData to base64 JSON if needed
-        if (typeof FormData !== 'undefined' && data instanceof FormData) {
-            console.log('ℹ️ Converting FormData to base64 JSON for image endpoint');
-            const fileEntry = data.get('file') || data.get('image');
-            if (!fileEntry) throw new Error('No image file found in FormData');
-            const blob = fileEntry;
-            const toB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onloadend = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
-            const b64 = await toB64(blob);
-            data = { image_base64: b64, format: 'base64', prompt: data.get('prompt') || 'Analyze this image for fraud or scam indicators' };
-        }
-
-        // Normalize incoming object
-        if (data && typeof data === 'object') {
-            // If only "image" provided, map to image_base64
-            if (!data.image_base64 && data.image && typeof data.image === 'string') {
-                data.image_base64 = data.image;
-            }
-            if (data.image_base64 && !data.format) data.format = 'base64';
-        }
-
-        const base64Len = data?.image_base64 ? data.image_base64.length : 0;
-        console.log('🖼️ Prepared base64 (length only):', base64Len);
-
-        const prompt = data.prompt || 'Analyze this image for fraud or scam indicators';
-        const b64 = data.image_base64;
-        if (!b64) {
-            throw new Error('No base64 image data supplied for image analysis');
-        }
-
-        // Prepare a set of payload variants (some APIs are picky about field names)
-        const payloadVariants = [
-            { image_base64: b64, format: 'base64', prompt },
-            { image: b64, format: 'base64', prompt },
-            { image_base64: b64, image: b64, format: 'base64', prompt },
-            { image_base64: b64, format: 'base64' } // without prompt
-        ];
-
-        let lastErrorStatus = null;
-        let lastErrorBody = null;
-        let successResponse = null;
-
-        for (let i = 0; i < payloadVariants.length; i++) {
-            const variant = payloadVariants[i];
-            console.log(`📤 Image API attempt ${i + 1}/${payloadVariants.length} with keys:`, Object.keys(variant));
-            const attemptOptions = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': config.apiKey
-                },
-                body: JSON.stringify(variant)
-            };
-            try {
-                const resp = await fetch(config.endpoint, attemptOptions);
-                console.log(`📥 Attempt ${i + 1} status:`, resp.status, resp.statusText);
-                if (!resp.ok) {
-                    lastErrorStatus = resp.status;
-                    try {
-                        lastErrorBody = await resp.text();
-                    } catch (_) {
-                        lastErrorBody = '<unreadable>';
-                    }
-                    console.warn(`⚠️ Attempt ${i + 1} failed (${resp.status}). Body snippet:`, (lastErrorBody || '').substring(0, 180));
-                    // If server error 5xx, we might still try next variant; small delay for 500 specifically
-                    if (resp.status >= 500) {
-                        await new Promise(r => setTimeout(r, 250));
-                    }
-                    continue; // try next variant
-                }
-                // Success
-                successResponse = await resp.json();
-                console.log('✅ Image API success on variant', i + 1, 'raw response:', successResponse);
-                // Replace result variable path by faking normal flow below (assign and break)
-                result = successResponse; // allow normal post-processing logic
-                break;
-            } catch (fetchErr) {
-                console.error(`❌ Network/Fetch error on attempt ${i + 1}:`, fetchErr.message);
-                lastErrorBody = fetchErr.message;
-                // brief delay then continue
-                await new Promise(r => setTimeout(r, 150));
-            }
-        }
-
-        if (!successResponse) {
-            console.error('🛑 All image payload variants failed. Last status/body:', lastErrorStatus, lastErrorBody);
-            throw new Error(`Image analysis failed (last status ${lastErrorStatus}): ${lastErrorBody?.substring(0,200)}`);
-        }
-
-        // Skip the generic fetch below since we already fetched successfully.
-        // Continue to transformation logic outside main branch.
-        console.log('🔁 Bypassing generic request flow for image after success variant.');
-        // Proceed directly to transformation logic without executing rest of function's fetch section.
-        // Emulate early-return pattern: wrap transformation logic after generic fetch in a conditional.
-        // We'll handle by marking a flag and jumping to transformation portion.
-        var skipGenericRequest = true;
-        // Fall through so transformation logic executes.
-    } else {
-        // Handle text analysis with Cogniflow
-        const payload = { text: data.text || data };
-        
-        options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': config.apiKey
-            },
-            body: JSON.stringify(payload)
-        };
+            break;
+        case 'url':
+            requestBody = { url: data.url || data };
+            break;
+        default:
+            throw new Error(`Unknown analysis type: ${type}`);
     }
-    let result;
-    if (!skipGenericRequest) {
-        console.log('📡 Making API request:', { url: config.endpoint, method: options.method });
-        console.log('📋 Request options:', { headers: options.headers, bodyPreview: typeof options.body === 'string' ? options.body.substring(0, 120) : typeof options.body });
+    
+    console.log('� Request body prepared:', { ...requestBody, imageData: requestBody.imageData ? '[IMAGE_DATA]' : undefined });
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    };
+    
+    console.log('📡 Making API request:', { url: config.endpoint, method: options.method });
+    
+    try {
         const response = await fetch(config.endpoint, options);
-        console.log('📡 Fetch completed for:', config.endpoint);
-        
         console.log('📥 API response status:', response.status, response.statusText);
         
         if (!response.ok) {
             console.error('❌ API request failed:', response.status, response.statusText);
-            // Try to get error details from response
+            let errorText = 'Unknown error';
             try {
-                const errorText = await response.text();
+                errorText = await response.text();
                 console.error('❌ Error response body:', errorText);
             } catch (e) {
                 console.error('❌ Could not read error response');
             }
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+            throw new Error(`API request failed: ${response.status} - ${errorText}`);
         }
         
-        result = await response.json();
+        const result = await response.json();
         console.log('📦 Raw API response:', result);
-    }
-    
-    // Transform Google Safe Browsing API response to match expected format
-    if (config.type === 'google-safe-browsing') {
-        console.log('🛡️ Processing Google Safe Browsing response...');
-        const hasThreat = result.matches && result.matches.length > 0;
-        console.log('🔍 Threat analysis:', { hasThreat, matches: result.matches });
         
-        result = {
-            isFraud: hasThreat || false, // Ensure it's always boolean
-            confidence: hasThreat ? 95 : 5,
-            riskLevel: hasThreat ? 'High Risk - Malicious URL detected' : 'Safe - No known threats',
-            details: hasThreat ? `Threat detected: ${result.matches[0].threatType}` : 'URL appears safe',
-            source: 'Google Safe Browsing'
+        // Transform the response to match the expected format
+        const transformedResult = {
+            isFraud: result.isFraudulent || result.isFraud || !result.isSafe || false,
+            confidence: result.confidenceScore || result.confidence || 0,
+            riskLevel: result.isFraudulent || result.isFraud || !result.isSafe ? 'High Risk' : 'Safe',
+            details: result.explanation || result.details || 'Analysis complete',
+            source: 'Local API'
         };
         
-        console.log('✅ Transformed Safe Browsing result:', result);
-    } else {
-        // For Cogniflow APIs, extract confidence from the actual response
-        console.log('🧠 Processing Cogniflow response...');
+        console.log('🔧 Transformed result:', transformedResult);
+        return transformedResult;
         
-        if (result.result !== undefined) {
-            // Handle the actual Cogniflow response format: {result: 'fraud', confidence_score: 0.698}
-            const prediction = result.result;
-            let confidence = (result.confidence_score || result.confidence || 0.05) * 100;
-            
-            console.log('📊 Cogniflow analysis:', { prediction, confidence, originalConfidence: result.confidence_score });
-            
-            result = {
-                isFraud: prediction === 'fraud' || prediction === 'scam',
-                confidence: Math.round(confidence),
-                riskLevel: confidence > 80 ? 'High Risk' : confidence > 50 ? 'Medium Risk' : 'Low Risk',
-                details: prediction === 'fraud' ? `Fraud detected with ${Math.round(confidence)}% confidence` : 
-                        prediction === 'scam' ? `Scam detected with ${Math.round(confidence)}% confidence` :
-                        `Classified as: ${prediction} (${Math.round(confidence)}% confidence)`,
-                source: 'Cogniflow'
-            };
-        } else if (result.prediction || result.predictions) {
-            // Handle older prediction format (if still used)
-            const prediction = result.prediction || result.predictions?.[0];
-            let confidence = 5; // default low confidence
-            
-            if (typeof prediction === 'object') {
-                confidence = (prediction.confidence || prediction.score || 0.05) * 100;
-            } else if (result.confidence !== undefined) {
-                confidence = result.confidence * 100;
-            } else if (result.score !== undefined) {
-                confidence = result.score * 100;
-            }
-            
-            result = {
-                isFraud: prediction === 'fraud' || prediction === 'scam' || confidence > 50,
-                confidence: Math.round(confidence),
-                riskLevel: confidence > 80 ? 'High Risk' : confidence > 50 ? 'Medium Risk' : 'Low Risk',
-                details: result.details || `Analysis complete with ${Math.round(confidence)}% confidence`,
-                source: 'Cogniflow'
-            };
-        } else if (result.label || result.class_name || (result.classes && Array.isArray(result.classes))) {
-            // Handle image classification response variations
-            let confidence = (result.confidence || result.score || result.confidence_score || 0.05) * 100;
-            let label = result.label || result.class_name;
-
-            // If label missing but classes array exists, take top class
-            if (!label && result.classes && result.classes.length) {
-                const top = result.classes[0];
-                label = top.label || top.class || 'unknown';
-                if (top.score) confidence = top.score * 100;
-            }
-
-            result = {
-                isFraud: ['fraud', 'scam', 'phishing', 'suspicious'].includes((label || '').toLowerCase()),
-                confidence: Math.round(confidence),
-                riskLevel: confidence > 80 ? 'High Risk' : confidence > 50 ? 'Medium Risk' : 'Low Risk',
-                details: `Image classified as: ${label} (${Math.round(confidence)}% confidence)` ,
-                source: 'Cogniflow'
-            };
-        }
+    } catch (error) {
+        console.error('❌ API request error:', error);
+        throw error;
     }
-    
-    console.log('🔧 Final transformed result:', result);
-    return result;
 }
 
 /**

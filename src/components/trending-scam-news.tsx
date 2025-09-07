@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Rss, TrendingUp } from "lucide-react";
-import Link from 'next/link';
+import { ExtensionSafeExternalLink } from './extension-safe-external-link';
 
 // Update NewsData to expect the formatted date
 import type { NewsData as BaseNewsData, Article as BaseArticle } from "@/lib/news";
@@ -43,9 +43,13 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
              <div className="absolute right-0 top-0 h-full w-12 sm:w-16 bg-gradient-to-l from-background to-transparent" />
         </div>
 
-        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3" suppressHydrationWarning>
           {news.articles.slice(0, 6).map((article, index) => (
-            <Link key={article.url + index} href={article.url} target="_blank" rel="noopener noreferrer" className="group block">
+            <ExtensionSafeExternalLink 
+              key={article.url + index} 
+              href={article.url}
+              className="group block"
+            >
                 <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
                     <div className="p-4 sm:p-6">
                         <div className="flex items-start justify-between gap-3">
@@ -67,7 +71,7 @@ export function TrendingScamNews({ initialNews }: { initialNews: NewsData }) {
                         </div>
                     </div>
                 </div>
-            </Link>
+            </ExtensionSafeExternalLink>
           ))}
         </div>
       </div>

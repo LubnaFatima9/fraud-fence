@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeUrlForFraud } from '@/ai/flows/analyze-url-fraud';
+import { createCorsResponse, handleCorsPreflightRequest } from '@/lib/cors';
 import { z } from 'zod';
 
 const RequestSchema = z.object({
@@ -9,13 +10,20 @@ const RequestSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('🔗 URL analysis API called with:', { url: body.url });
+    const origin = request.headers.get('origin') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    
+    console.log('🔗 URL analysis API called with:', { 
+      url: body.url,
+      origin,
+      userAgent: userAgent.includes('Mozilla') ? 'Browser' : userAgent.substring(0, 50)
+    });
     
     // Validate request
     const validation = RequestSchema.safeParse(body);
     if (!validation.success) {
       console.error('❌ URL analysis validation failed:', validation.error);
-      return NextResponse.json(
+      return createCorsResponse(
         { error: 'Invalid request data', details: validation.error.issues },
         { status: 400 }
       );
@@ -32,21 +40,34 @@ export async function POST(request: NextRequest) {
       explanationLength: result.explanation?.length 
     });
 
-    return NextResponse.json(result);
+    return createCorsResponse(result);
   } catch (error) {
-    console.error('❌ URL analysis API error:', error);
-    return NextResponse.json(
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const stack = error instanceof Error ? error.stack : undefined;
+    
+    console.error('❌ URL analysis API error:', {
+      message: errorMessage,
+      stack: stack?.substring(0, 500),
+      timestamp: new Date().toISOString()
+    });
+    
+    return createCorsResponse(
       { 
         error: 'Analysis failed', 
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
+        message: errorMessage,
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );
   }
 }
 
+export async function OPTIONS() {
+  return handleCorsPreflightRequest();
+}
+
 export async function GET() {
-  return NextResponse.json(
+  return createCorsResponse(
     { error: 'Method not allowed. Use POST.' },
     { status: 405 }
   );
