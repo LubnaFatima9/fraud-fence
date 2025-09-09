@@ -1,22 +1,18 @@
-// API Configuration - Mixed APIs (Cogniflow + Google Safe Browsing)
-const API_BASE_URL = 'https://predict.cogniflow.ai';
-const GOOGLE_SAFE_BROWSING_API_KEY = 'AIzaSyD7t6JWpS89dUelr1MXYJHcze2MnLTLmpY';
+// API Configuration - Local Next.js endpoints
+const API_BASE_URL = 'http://localhost:9005/api';
 
 const API_CONFIG = {
     text: {
-        endpoint: `${API_BASE_URL}/text/classification/predict/69cd908d-f479-49f2-9984-eb6c5d462417`,
-        apiKey: 'cdc872e5-00ae-4d32-936c-a80bf6a889ce',
-        type: 'cogniflow'
+        endpoint: `${API_BASE_URL}/analyze-text`,
+        type: 'local'
     },
     image: {
-        endpoint: `${API_BASE_URL}/image/llm-classification/predict/ba056844-ddea-47fb-b6f5-9adcf567cbae`,
-        apiKey: '764ea05f-f623-4c7f-919b-dac6cf7223f3',
-        type: 'cogniflow'
+        endpoint: `${API_BASE_URL}/analyze-image`,
+        type: 'local'
     },
     url: {
-        endpoint: `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GOOGLE_SAFE_BROWSING_API_KEY}`,
-        apiKey: GOOGLE_SAFE_BROWSING_API_KEY,
-        type: 'google-safe-browsing'
+        endpoint: `${API_BASE_URL}/analyze-url`,
+        type: 'local'
     }
 };
 
@@ -310,7 +306,8 @@ function createHistoryItemElement(item) {
     
     // Truncate long inputs
     let displayInput = input;
-    if (typeof input === 'string' && input.length > 100) {
+    const hasLongInput = typeof input === 'string' && input.length > 100;
+    if (hasLongInput) {
         displayInput = input.substring(0, 100) + '...';
     } else if (type === 'image') {
         displayInput = 'Image file';
@@ -321,19 +318,31 @@ function createHistoryItemElement(item) {
     const statusIcon = isFraud ? '🚨' : (confidence > 50 ? '⚠️' : '✅');
     const statusText = isFraud ? 'Fraudulent' : (confidence > 50 ? 'Suspicious' : 'Safe');
     
+    // Create unique ID for this item
+    const itemId = `history-item-${item.id || Date.now()}`;
+    
     div.innerHTML = `
         <div class="history-item-header">
             <span class="history-type ${type}">${type}</span>
             <span class="history-timestamp">${timeString}</span>
         </div>
-        <div class="history-content ${input && input.length > 100 ? 'truncated' : ''}">${displayInput}</div>
+        <div class="history-content ${hasLongInput ? 'truncated' : ''}">${displayInput}</div>
         <div class="history-result">
             <span class="history-status ${statusClass}">
                 ${statusIcon} ${statusText}
             </span>
             <span class="history-confidence">${Math.round(confidence)}%</span>
         </div>
+        <div class="history-actions">
+            <button class="show-more-btn" data-item-id="${itemId}">Show More</button>
+        </div>
     `;
+    
+    // Add click event for Show More button
+    const showMoreBtn = div.querySelector('.show-more-btn');
+    showMoreBtn.addEventListener('click', () => {
+        showHistoryItemDetails(item);
+    });
     
     return div;
 }
@@ -368,12 +377,99 @@ async function saveToHistory(type, input, result) {
 }
 
 /**
+ * Show detailed information for a history item
+ */
+function showHistoryItemDetails(item) {
+    const { type, input, result, timestamp } = item;
+    const { isFraud, confidence, riskLevel, details } = parseResultData(result);
+    
+    // Format timestamp
+    const date = new Date(timestamp);
+    const timeString = date.toLocaleString();
+    
+    // Status styling
+    const statusClass = isFraud ? 'fraud' : (confidence > 50 ? 'suspicious' : 'safe');
+    const statusIcon = isFraud ? '🚨' : (confidence > 50 ? '⚠️' : '✅');
+    const statusText = isFraud ? 'Fraudulent' : (confidence > 50 ? 'Suspicious' : 'Safe');
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'history-modal-overlay';
+    modal.innerHTML = `
+        <div class="history-modal">
+            <div class="history-modal-header">
+                <h3>Analysis Details</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="history-modal-content">
+                <div class="detail-section">
+                    <label>Type:</label>
+                    <span class="history-type ${type}">${type.toUpperCase()}</span>
+                </div>
+                <div class="detail-section">
+                    <label>Date:</label>
+                    <span>${timeString}</span>
+                </div>
+                <div class="detail-section">
+                    <label>Result:</label>
+                    <span class="history-status ${statusClass}">
+                        ${statusIcon} ${statusText} (${Math.round(confidence)}% confidence)
+                    </span>
+                </div>
+                <div class="detail-section">
+                    <label>Content:</label>
+                    <div class="content-display">${type === 'image' ? 'Image file' : input}</div>
+                </div>
+                <div class="detail-section">
+                    <label>Analysis Details:</label>
+                    <div class="analysis-details">${formatDetails(details)}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add to DOM
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    const closeBtn = modal.querySelector('.close-modal-btn');
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+    
+    // Close on Escape key
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+}
+
+/**
  * Clear all history
  */
 async function clearHistory() {
     try {
         await chrome.storage.local.remove([STORAGE_KEYS.HISTORY]);
-        loadHistory(); // Refresh display
+        
+        // Immediately update the UI
+        const historyList = document.getElementById('history-list');
+        const historyEmpty = document.getElementById('history-empty');
+        
+        historyList.innerHTML = '';
+        historyEmpty.style.display = 'block';
+        historyList.appendChild(historyEmpty);
+        
+        console.log('History cleared successfully');
     } catch (error) {
         console.error('Error clearing history:', error);
     }
@@ -423,7 +519,7 @@ function switchToTab(tabName) {
 }
 
 /**
- * Analyze content using the Cogniflow API
+ * Analyze content using the local Next.js API
  */
 async function analyzeContent(type, content, saveToHistoryFlag = true) {
     showLoading();
@@ -436,20 +532,18 @@ async function analyzeContent(type, content, saveToHistoryFlag = true) {
 
         let response;
         
-        if (config.type === 'google-safe-browsing') {
-            // Handle URL analysis with Google Safe Browsing API
-            const payload = {
-                client: {
-                    clientId: "fraud-fence-extension",
-                    clientVersion: "1.0.0"
-                },
-                threatInfo: {
-                    threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
-                    platformTypes: ["ANY_PLATFORM"],
-                    threatEntryTypes: ["URL"],
-                    threatEntries: [{ url: content }]
-                }
-            };
+        if (type === 'image') {
+            // Handle image analysis
+            const formData = new FormData();
+            formData.append('image', content);
+            
+            response = await fetch(config.endpoint, {
+                method: 'POST',
+                body: formData
+            });
+        } else if (type === 'url') {
+            // Handle URL analysis
+            const payload = { url: content };
             
             response = await fetch(config.endpoint, {
                 method: 'POST',
@@ -458,28 +552,14 @@ async function analyzeContent(type, content, saveToHistoryFlag = true) {
                 },
                 body: JSON.stringify(payload)
             });
-        } else if (type === 'image') {
-            // Handle image analysis with Cogniflow
-            const formData = new FormData();
-            formData.append('file', content);
-            
-            response = await fetch(config.endpoint, {
-                method: 'POST',
-                headers: {
-                    'x-api-key': config.apiKey
-                    // Don't set Content-Type for FormData - let browser set it
-                },
-                body: formData
-            });
         } else {
-            // Handle text analysis with Cogniflow
+            // Handle text analysis
             const payload = { text: content };
             
             response = await fetch(config.endpoint, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': config.apiKey
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
@@ -489,66 +569,29 @@ async function analyzeContent(type, content, saveToHistoryFlag = true) {
             throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
         
-        let result = await response.json();
+        const result = await response.json();
         
-        // Transform Google Safe Browsing API response to match expected format
-        if (config.type === 'google-safe-browsing') {
-            const hasThreat = result.matches && result.matches.length > 0;
-            result = {
-                isFraud: hasThreat,
-                confidence: hasThreat ? 95 : 5, // High confidence for Safe Browsing detections
-                riskLevel: hasThreat ? 'High Risk - Malicious URL detected' : 'Safe - No known threats',
-                details: hasThreat ? `Threat detected: ${result.matches[0].threatType}` : 'URL appears safe',
-                source: 'Google Safe Browsing'
-            };
-        } else {
-            // For Cogniflow APIs, extract confidence from the actual response
-            if (result.prediction || result.predictions) {
-                // Handle text classification response
-                const prediction = result.prediction || result.predictions?.[0];
-                let confidence = 5; // default low confidence
-                
-                if (typeof prediction === 'object') {
-                    confidence = (prediction.confidence || prediction.score || 0.05) * 100;
-                } else if (result.confidence !== undefined) {
-                    confidence = result.confidence * 100;
-                } else if (result.score !== undefined) {
-                    confidence = result.score * 100;
-                }
-                
-                result = {
-                    isFraud: prediction === 'fraud' || prediction === 'scam' || confidence > 50,
-                    confidence: Math.round(confidence),
-                    riskLevel: confidence > 80 ? 'High Risk' : confidence > 50 ? 'Medium Risk' : 'Low Risk',
-                    details: result.details || `Analysis complete with ${Math.round(confidence)}% confidence`,
-                    source: 'Cogniflow'
-                };
-            } else if (result.label || result.class_name) {
-                // Handle image classification response  
-                let confidence = (result.confidence || result.score || 0.05) * 100;
-                const label = result.label || result.class_name;
-                
-                result = {
-                    isFraud: label === 'fraud' || label === 'scam' || label === 'suspicious',
-                    confidence: Math.round(confidence),
-                    riskLevel: confidence > 80 ? 'High Risk' : confidence > 50 ? 'Medium Risk' : 'Low Risk', 
-                    details: `Classified as: ${label} (${Math.round(confidence)}% confidence)`,
-                    source: 'Cogniflow'
-                };
-            }
-        }
+        // The local API already returns the expected format
+        // Just ensure we have all required fields
+        const processedResult = {
+            isFraud: result.isFraud || false,
+            confidence: result.confidence || 0,
+            riskLevel: result.riskLevel || 'Unknown',
+            details: result.explanation || result.details || 'Analysis complete',
+            source: 'Fraud Fence AI'
+        };
         
         // Save to history if requested
         if (saveToHistoryFlag) {
-            await saveToHistory(type, content, result);
+            await saveToHistory(type, content, processedResult);
         }
         
-        showResults(result);
-        return result;
+        showResults(processedResult);
+        return processedResult;
         
     } catch (error) {
         console.error('Analysis error:', error);
-        showError(`Analysis failed: ${error.message}`);
+        showError(`Analysis failed: ${error.message}. Make sure the Fraud Fence server is running at http://localhost:9005`);
         throw error;
     }
 }
