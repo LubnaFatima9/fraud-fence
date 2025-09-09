@@ -19,6 +19,24 @@ const API_CONFIG = {
     }
 };
 
+/**
+ * Test if the local server is running
+ */
+async function testServerConnection() {
+    try {
+        console.log('🔍 Testing server connection...');
+        const response = await fetch('http://localhost:9005/', { 
+            method: 'GET',
+            mode: 'cors'
+        });
+        console.log('✅ Server connection test passed:', response.status);
+        return true;
+    } catch (error) {
+        console.error('❌ Server connection test failed:', error.message);
+        return false;
+    }
+}
+
 // Context Menu IDs
 const CONTEXT_MENU_IDS = {
     TEXT: 'analyze-selected-text',
@@ -186,6 +204,12 @@ async function handleTextAnalysis(text, tab) {
     showNotification('Analyzing...', 'Checking selected text for fraud patterns.');
 
     try {
+        // Test server connection first
+        const isServerRunning = await testServerConnection();
+        if (!isServerRunning) {
+            throw new Error('Server not running. Please start the Next.js server with "npm run dev"');
+        }
+        
         console.log('🌐 Calling analyzeContent API...');
         const result = await analyzeContent('text', { text });
         console.log('✅ API response received:', result);
@@ -483,7 +507,16 @@ async function analyzeContent(type, data) {
     console.log('📡 Making API request:', { url: config.endpoint, method: options.method });
     
     try {
-        const response = await fetch(config.endpoint, options);
+        // Add connection timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch(config.endpoint, {
+            ...options,
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
         console.log('📥 API response status:', response.status, response.statusText);
         
         if (!response.ok) {
@@ -515,7 +548,15 @@ async function analyzeContent(type, data) {
         
     } catch (error) {
         console.error('❌ API request error:', error);
-        throw error;
+        
+        // Provide more specific error messages
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout - please check if the server is running at http://localhost:9005');
+        } else if (error.message.includes('fetch')) {
+            throw new Error('Connection failed - please ensure the Next.js server is running (npm run dev)');
+        } else {
+            throw error;
+        }
     }
 }
 
