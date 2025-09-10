@@ -93,6 +93,57 @@ const urlExplanationPrompt = ai.definePrompt({
 
 const googleSafeBrowsingApiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
 
+/**
+ * Enhanced domain validation and fraud detection
+ */
+async function validateDomainAndDetectFraud(url: string) {
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname;
+    
+    // Check for common typos and suspicious patterns
+    const suspiciousPatterns = [
+      /g[0o][0o]gle/i, // google typos
+      /fac[e3]b[o0][o0]k/i, // facebook typos
+      /amaz[o0]n/i, // amazon typos
+      /payp[a4]l/i, // paypal typos
+      /micr[o0]s[o0]ft/i, // microsoft typos
+      /tw[i1]tter/i, // twitter typos
+      /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, // IP addresses instead of domains
+      /[a-z]+-[a-z]+-[a-z]+\.[a-z]{2,}/i, // suspicious multi-dash domains
+      /[a-z]+[0-9]+[a-z]+\./i, // mixed letters and numbers
+      /\.(tk|ml|ga|cf)$/i, // suspicious TLDs
+    ];
+    
+    const isSuspiciousDomain = suspiciousPatterns.some(pattern => pattern.test(domain));
+    
+    // Check if domain exists (basic validation)
+    let domainExists = true;
+    try {
+      // Try to resolve the domain
+      const response = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
+      const dnsResult = await response.json();
+      domainExists = dnsResult.Status === 0 && dnsResult.Answer && dnsResult.Answer.length > 0;
+    } catch (error) {
+      domainExists = false;
+    }
+    
+    return {
+      isSuspiciousDomain,
+      domainExists,
+      domain,
+      suspiciousReasons: isSuspiciousDomain ? ['Suspicious domain pattern detected'] : []
+    };
+  } catch (error) {
+    return {
+      isSuspiciousDomain: true,
+      domainExists: false,
+      domain: 'Invalid URL',
+      suspiciousReasons: ['Invalid URL format']
+    };
+  }
+}
+
 const analyzeUrlFlow = ai.defineFlow(
   {
     name: 'analyzeUrlFlow',
@@ -100,17 +151,25 @@ const analyzeUrlFlow = ai.defineFlow(
     outputSchema: AnalyzeUrlOutputSchema,
   },
   async input => {
+    // First, validate domain and check for fraud patterns
+    const domainAnalysis = await validateDomainAndDetectFraud(input.url);
+    
     if (!googleSafeBrowsingApiKey) {
-      // In a real app, you might want to fall back to a less-reliable method
-      // or simply return a safe-by-default result with a warning.
-      // For this example, we'll return a GenAI-only result.
-      const { output } = await urlExplanationPrompt({ ...input, isSafe: true, threatTypes: [] });
+      // Fallback to domain analysis only
+      const isSafe = !domainAnalysis.isSuspiciousDomain && domainAnalysis.domainExists;
+      const threatTypes = isSafe ? [] : ['SUSPICIOUS_DOMAIN'];
+      
+      const { output } = await urlExplanationPrompt({ 
+        ...input, 
+        isSafe, 
+        threatTypes: [...threatTypes, ...domainAnalysis.suspiciousReasons] 
+      });
       if (!output) {
         throw new Error("GenAI analysis failed to provide an explanation.");
       }
       return {
-        isSafe: true,
-        threatTypes: [],
+        isSafe,
+        threatTypes,
         explanation: output.explanation
       };
     }
@@ -147,11 +206,27 @@ const analyzeUrlFlow = ai.defineFlow(
 
     const data = await response.json();
 
-    const isSafe = !data.matches || data.matches.length === 0;
-    const threatTypes = data.matches ? data.matches.map((match: any) => match.threatType) : [];
+    let isSafe = !data.matches || data.matches.length === 0;
+    let threatTypes = data.matches ? data.matches.map((match: any) => match.threatType) : [];
+    
+    // Combine with domain analysis
+    if (domainAnalysis.isSuspiciousDomain || !domainAnalysis.domainExists) {
+      isSafe = false;
+      if (!domainAnalysis.domainExists) {
+        threatTypes.push('NONEXISTENT_DOMAIN');
+      }
+      if (domainAnalysis.isSuspiciousDomain) {
+        threatTypes.push('SUSPICIOUS_DOMAIN');
+      }
+      threatTypes = [...threatTypes, ...domainAnalysis.suspiciousReasons];
+    }
 
     // Now, get the GenAI explanation.
-    const { output } = await urlExplanationPrompt({ ...input, isSafe, threatTypes });
+    const { output } = await urlExplanationPrompt({ 
+      ...input, 
+      isSafe, 
+      threatTypes
+    });
     if (!output) {
         throw new Error("GenAI analysis failed to provide an explanation.");
     }

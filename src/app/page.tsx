@@ -4,6 +4,7 @@ import { AppFooter } from '@/components/layout/footer';
 import { FraudAnalyzer } from '@/components/fraud-analyzer';
 import { ExtensionPromo } from '@/components/extension-promo';
 import { TrendingScamNews } from '@/components/trending-scam-news';
+import { FraudProtectionStats } from '@/components/fraud-protection-stats';
 import { getTrendingNews } from '@/lib/news';
 import { format } from 'date-fns';
 
@@ -46,6 +47,7 @@ export default async function Home() {
             </div>
           </div>
         </section>
+        <FraudProtectionStats />
         <TrendingScamNews initialNews={initialNews} />
         <ExtensionPromo />
       </main>

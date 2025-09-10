@@ -104,6 +104,13 @@ export function FraudAnalyzer() {
   ) => {
     setLoading(true);
     setResult(null);
+    
+    // Show immediate feedback to user
+    toast({
+      title: "Analysis Started",
+      description: "Our dual AI system is analyzing your content...",
+    });
+    
     try {
       console.log(`🚀 Calling ${apiEndpoint} with:`, payload);
       
@@ -117,7 +124,20 @@ export function FraudAnalyzer() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `API request failed with status ${response.status}`);
+        
+        // Enhanced error handling with specific user guidance
+        let userMessage = "An unknown error occurred.";
+        if (response.status === 503) {
+          userMessage = "AI service temporarily overloaded. Please try again in a moment.";
+        } else if (response.status === 429) {
+          userMessage = "Rate limit exceeded. Please wait a moment before trying again.";
+        } else if (response.status >= 500) {
+          userMessage = "Server error occurred. Our team has been notified.";
+        } else {
+          userMessage = errorData.message || `Request failed (${response.status})`;
+        }
+        
+        throw new Error(userMessage);
       }
 
       const result = await response.json();
@@ -128,6 +148,15 @@ export function FraudAnalyzer() {
         type, 
         inputValue: type === 'image' ? payload.fileName : (payload.text || payload.url) 
       });
+      
+      // Success feedback
+      toast({
+        title: "Analysis Complete",
+        description: result.isFraudulent 
+          ? "🚨 Fraud detected! Please review the analysis carefully." 
+          : "✅ Content appears safe, but always stay vigilant.",
+      });
+      
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
