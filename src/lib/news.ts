@@ -85,7 +85,14 @@ export async function getTrendingNews(): Promise<NewsData> {
 
     let rewrittenHeadlines: string[];
     try {
-        rewrittenHeadlines = await rewriteHeadlines(originalHeadlines);
+        // Add timeout to prevent hanging the page load
+        const rewritePromise = rewriteHeadlines(originalHeadlines);
+        const timeoutPromise = new Promise<string[]>((_, reject) => 
+            setTimeout(() => reject(new Error("Headline rewrite timeout")), 15000) // 15 second timeout
+        );
+        
+        rewrittenHeadlines = await Promise.race([rewritePromise, timeoutPromise]);
+        
         if (rewrittenHeadlines.length !== originalHeadlines.length) {
           // If the AI didn't return the same number of headlines, fall back to the originals.
           rewrittenHeadlines = originalHeadlines;
@@ -93,14 +100,20 @@ export async function getTrendingNews(): Promise<NewsData> {
     } catch (rewriteError) {
         console.error("Headline rewrite failed, falling back to original headlines:", rewriteError);
 
-        // If the error is a rate limit error, we don't want to re-throw it.
-        // We've already fallen back to the original headlines.
-        if (rewriteError instanceof Error && (rewriteError.message.includes("429") || rewriteError.message.includes("500"))) {
+        // Handle various API errors gracefully
+        if (rewriteError instanceof Error && (
+            rewriteError.message.includes("429") || // Rate limit
+            rewriteError.message.includes("500") || // Internal server error
+            rewriteError.message.includes("503") || // Service unavailable (overloaded)
+            rewriteError.message.includes("overloaded") || // Gemini overloaded message
+            rewriteError.message.includes("timeout") // Timeout error
+        )) {
             // Log a less severe message, since we handled it gracefully.
-            console.warn("AI rate limit hit or server error. Displaying original news headlines.");
+            console.warn("AI service unavailable, overloaded, or timed out. Displaying original news headlines.");
             rewrittenHeadlines = originalHeadlines;
         } else {
             // For other errors, still fallback but log it for debugging
+            console.warn("Unexpected AI error, using original headlines:", rewriteError instanceof Error ? rewriteError.message : String(rewriteError));
             rewrittenHeadlines = originalHeadlines;
         }
     }
