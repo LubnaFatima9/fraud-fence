@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzeTextForFraud } from '@/ai/flows/analyze-text-fraud';
+import { analyzeTextForFraud } from '@/ai/flows/analyze-text-fraud-enhanced';
 import { createCorsResponse, handleCorsPreflightRequest } from '@/lib/cors';
 import { z } from 'zod';
 
@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
 
     // Call the AI analysis flow
     console.log(`[${requestId}] 🤖 Calling analyzeTextForFraud...`);
+    console.log(`[${requestId}] 📝 Text to analyze: ${text.substring(0, 100)}...`);
+    
     const result = await analyzeTextForFraud({ text });
     const duration = Date.now() - startTime;
     
@@ -62,7 +64,10 @@ export async function POST(request: NextRequest) {
       message: errorMessage,
       stack: stack?.substring(0, 500),
       timestamp: new Date().toISOString(),
-      error: error
+      errorType: error?.constructor?.name,
+      errorCode: (error as any)?.code,
+      errorStatus: (error as any)?.status,
+      fullError: error
     });
     
     return createCorsResponse(

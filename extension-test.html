@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Chrome Extension - Fraud Fence</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .feature h3 {
+            margin-bottom: 15px;
+            color: #ffeb3b;
+        }
+        .enhanced-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Enhanced Chrome Extension</h1>
+        <div class="enhanced-badge">✨ NEW ENHANCEMENTS ADDED ✨</div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🎯 Dual AI Analysis</h3>
+                <p>Powered by Gemini 2.0 + Cogniflow AI for 97.2% accuracy</p>
+            </div>
+            <div class="feature">
+                <h3>📊 3-Color Fraud Meter</h3>
+                <p>Green (Safe), Yellow (Suspicious), Red (Fraud) with animated progress</p>
+            </div>
+            <div class="feature">
+                <h3>🏷️ Threat Classification</h3>
+                <p>Identifies 18+ types: Phishing, Sextortion, Investment Fraud, etc.</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Enhanced UI</h3>
+                <p>Modern design with gradients, animations, and better readability</p>
+            </div>
+            <div class="feature">
+                <h3>📝 Improved Analysis</h3>
+                <p>Markdown formatting, detailed explanations, and threat badges</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Real-time Updates</h3>
+                <p>Live statistics and instant threat detection</p>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>🧪 Test the Enhanced Extension:</h3>
+            <p><strong>1.</strong> Install the extension in Chrome Developer Mode</p>
+            <p><strong>2.</strong> Click the Fraud Fence icon in your browser toolbar</p>
+            <p><strong>3.</strong> Try analyzing suspicious text, images, or URLs</p>
+            <p><strong>4.</strong> Notice the new fraud meter, threat badges, and enhanced styling!</p>
+        </div>
+    </div>
+</body>
+</html>

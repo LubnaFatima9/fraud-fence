@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Analysis Output</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { border: 1px solid #ccc; padding: 20px; margin: 20px 0; }
+        .explanation { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Fraud Fence Analysis Test Results</h1>
+    
+    <div class="result">
+        <h2>Text Analysis Test</h2>
+        <button onclick="testText()">Test Fraudulent Text</button>
+        <div id="textResult"></div>
+    </div>
+    
+    <div class="result">
+        <h2>URL Analysis Test</h2>
+        <button onclick="testUrl()">Test Suspicious URL</button>
+        <div id="urlResult"></div>
+    </div>
+    
+    <div class="result">
+        <h2>Image Analysis Test</h2>
+        <button onclick="testImage()">Test Suspicious Image</button>
+        <div id="imageResult"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:9005';
+
+        async function testText() {
+            const testText = "URGENT! Your PayPal account will be suspended unless you verify immediately. Click here and enter your password.";
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/text-detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: testText }),
+                });
+                
+                const result = await response.json();
+                displayResult('textResult', result);
+            } catch (error) {
+                document.getElementById('textResult').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        async function testUrl() {
+            const testUrl = "http://secure-paypal-verification.suspicious-domain.tk/login";
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/url-detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: testUrl }),
+                });
+                
+                const result = await response.json();
+                displayResult('urlResult', result);
+            } catch (error) {
+                document.getElementById('urlResult').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        async function testImage() {
+            const testImageData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/image-detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        imageData: testImageData,
+                        fileName: "urgent-payment-invoice.exe"
+                    }),
+                });
+                
+                const result = await response.json();
+                displayResult('imageResult', result);
+            } catch (error) {
+                document.getElementById('imageResult').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <h3>Analysis Result:</h3>
+                <p><strong>Fraudulent:</strong> ${result.isFraudulent}</p>
+                <p><strong>Confidence:</strong> ${Math.round(result.confidenceScore * 100)}%</p>
+                <p><strong>Threat Types:</strong> ${result.threatTypes?.join(', ') || 'None'}</p>
+                <div class="explanation">
+                    <h4>Detailed Explanation:</h4>
+                    <pre>${result.explanation}</pre>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

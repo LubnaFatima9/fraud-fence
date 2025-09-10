@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Analysis Results - Fraud Fence</title>
+    <link rel="stylesheet" href="analysis.css">
+</head>
+<body>
+    <div class="analysis-container">
+        <!-- Header -->
+        <header class="analysis-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">🛡️</div>
+                    <div class="brand-info">
+                        <h1>Fraud Fence</h1>
+                        <div class="ai-badges">
+                            <span class="ai-badge gemini">Gemini 2.0</span>
+                            <span class="ai-badge cogniflow">Cogniflow AI</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="back-btn" class="action-btn secondary">
+                        <span class="btn-icon">←</span>
+                        Back to Extension
+                    </button>
+                    <button id="new-analysis-btn" class="action-btn primary">
+                        <span class="btn-icon">+</span>
+                        New Analysis
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="analysis-main">
+            <div class="content-wrapper">
+                <!-- Analysis Overview -->
+                <section class="analysis-overview">
+                    <div class="overview-header">
+                        <h2 id="analysis-title">Analysis Results</h2>
+                        <div class="analysis-meta">
+                            <span id="analysis-timestamp" class="timestamp">Just now</span>
+                            <span id="analysis-type" class="analysis-type-badge">Text Analysis</span>
+                        </div>
+                    </div>
+
+                    <!-- Fraud Risk Meter - Large Version -->
+                    <div class="fraud-meter-large">
+                        <div class="meter-header">
+                            <h3>Fraud Risk Assessment</h3>
+                            <div class="dual-ai-indicator">
+                                <span class="ai-icon">🤖</span>
+                                <span>Dual AI Analysis</span>
+                            </div>
+                        </div>
+                        <div class="meter-visualization">
+                            <div class="risk-gauge">
+                                <div class="gauge-bg">
+                                    <div class="gauge-fill" id="risk-gauge-fill"></div>
+                                </div>
+                                <div class="gauge-labels">
+                                    <span class="label safe">Safe</span>
+                                    <span class="label suspicious">Suspicious</span>
+                                    <span class="label fraud">Fraud</span>
+                                </div>
+                            </div>
+                            <div class="risk-score">
+                                <div class="score-value" id="risk-score">0%</div>
+                                <div class="score-label" id="risk-level">Analyzing...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Content Analysis -->
+                <section class="content-analysis">
+                    <div class="analyzed-content">
+                        <h3>Analyzed Content</h3>
+                        <div id="content-display" class="content-display">
+                            <div class="content-placeholder">
+                                Loading analyzed content...
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Threat Detection -->
+                <section class="threat-detection" id="threat-section" style="display: none;">
+                    <div class="section-header">
+                        <h3>🚨 Detected Threats</h3>
+                        <div class="threat-count-badge" id="threat-count">0 threats</div>
+                    </div>
+                    <div id="threat-list" class="threat-list">
+                        <!-- Threat items will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Detailed Analysis -->
+                <section class="detailed-analysis">
+                    <div class="section-header">
+                        <h3>📊 Detailed Analysis</h3>
+                        <div class="ai-confidence">
+                            <span class="confidence-label">AI Confidence:</span>
+                            <span id="ai-confidence" class="confidence-value">---%</span>
+                        </div>
+                    </div>
+                    <div class="analysis-content">
+                        <div id="analysis-explanation" class="explanation-text">
+                            <div class="loading-placeholder">
+                                <div class="loading-spinner"></div>
+                                <span>Generating detailed analysis...</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- AI Models Information -->
+                <section class="ai-models-info">
+                    <h3>🤖 AI Models Used</h3>
+                    <div class="models-grid">
+                        <div class="model-card gemini">
+                            <div class="model-header">
+                                <div class="model-icon">🧠</div>
+                                <div class="model-name">Gemini 2.0-flash-exp</div>
+                            </div>
+                            <div class="model-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Parameters:</span>
+                                    <span class="stat-value">200B+</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Accuracy:</span>
+                                    <span class="stat-value">96.8%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="model-card cogniflow">
+                            <div class="model-header">
+                                <div class="model-icon">🔍</div>
+                                <div class="model-name">Cogniflow AI</div>
+                            </div>
+                            <div class="model-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Specialization:</span>
+                                    <span class="stat-value">Fraud Detection</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Accuracy:</span>
+                                    <span class="stat-value">97.5%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Action Panel -->
+                <section class="action-panel">
+                    <div class="action-buttons">
+                        <button id="save-analysis-btn" class="action-btn primary">
+                            <span class="btn-icon">💾</span>
+                            Save Analysis
+                        </button>
+                        <button id="share-analysis-btn" class="action-btn secondary">
+                            <span class="btn-icon">📤</span>
+                            Share Results
+                        </button>
+                        <button id="report-false-positive-btn" class="action-btn secondary">
+                            <span class="btn-icon">📝</span>
+                            Report Issue
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="analysis-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span>© 2025 Fraud Fence - Advanced AI Fraud Detection</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#" id="privacy-link">Privacy Policy</a>
+                    <a href="#" id="terms-link">Terms of Service</a>
+                    <a href="#" id="support-link">Support</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Custom Notification System -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <script src="analysis.js"></script>
+</body>
+</html>

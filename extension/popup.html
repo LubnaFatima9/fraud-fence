@@ -8,13 +8,21 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
+        <!-- Enhanced Header -->
         <div class="header">
             <div class="logo">
                 <img src="icons/icon32.png" alt="Fraud Fence" class="logo-icon">
-                <h1>Fraud Fence</h1>
+                <div class="logo-text">
+                    <h1>Fraud Fence</h1>
+                    <div class="dual-ai-badge">Dual AI System</div>
+                </div>
             </div>
-            <p class="subtitle">Detect fraud, scams & suspicious content</p>
+            <p class="subtitle">Advanced fraud detection with Cogniflow + Gemini AI</p>
+            <div class="stats-mini">
+                <span class="stat-item">97.2% Accuracy</span>
+                <span class="stat-separator">•</span>
+                <span class="stat-item">18 Threat Types</span>
+            </div>
         </div>
 
         <!-- Tabs -->
@@ -99,16 +107,69 @@
             <p>Analyzing content...</p>
         </div>
 
-        <!-- Results Section -->
+        <!-- Enhanced Results Section -->
         <div class="results" id="results" style="display: none;">
-            <div class="result-header">
-                <div class="result-status" id="result-status"></div>
-                <div class="result-score" id="result-score"></div>
+            <!-- Fraud Risk Meter -->
+            <div class="fraud-meter-section">
+                <div class="meter-header">
+                    <span class="meter-label">Fraud Risk Meter</span>
+                    <div class="meter-score">
+                        <span id="fraud-percentage" class="percentage">0%</span>
+                        <span id="risk-level" class="risk-level">SAFE</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="fraud-progress"></div>
+                </div>
+                <div class="meter-scale">
+                    <span class="scale-label safe">Safe</span>
+                    <span class="scale-label suspicious">Suspicious</span>
+                    <span class="scale-label fraud">Fraud</span>
+                </div>
             </div>
-            <div class="result-details" id="result-details"></div>
+
+            <!-- Result Status -->
+            <div class="result-header">
+                <div class="result-icon" id="result-icon">🛡️</div>
+                <div class="result-status-text">
+                    <div class="result-title" id="result-title">Analysis Complete</div>
+                    <div class="result-subtitle" id="result-subtitle">Dual AI analysis finished</div>
+                </div>
+            </div>
+
+            <!-- Threat Types -->
+            <div class="threat-types-section" id="threat-types" style="display: none;">
+                <div class="section-title">
+                    <span class="title-icon">⚠️</span>
+                    <span>Detected Threats</span>
+                </div>
+                <div class="threat-badges" id="threat-badges-container"></div>
+            </div>
+
+            <!-- Analysis Details -->
+            <div class="analysis-details">
+                <div class="section-title">
+                    <span class="title-icon">🧠</span>
+                    <span>AI Analysis</span>
+                    <span class="dual-ai-mini">Dual AI</span>
+                </div>
+                <div class="analysis-content" id="analysis-content"></div>
+            </div>
+
+            <!-- Action Buttons -->
             <div class="result-actions">
-                <button id="clear-results" class="secondary-btn">Clear Results</button>
-                <button id="report-false-positive" class="secondary-btn">Report Issue</button>
+                <button id="clear-results" class="secondary-btn">
+                    <span class="btn-icon">🗑️</span>
+                    Clear
+                </button>
+                <button id="report-issue" class="secondary-btn">
+                    <span class="btn-icon">📝</span>
+                    Report
+                </button>
+                <button id="view-details" class="primary-btn">
+                    <span class="btn-icon">🔍</span>
+                    View Details
+                </button>
             </div>
         </div>
 

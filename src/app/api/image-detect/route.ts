@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzeImageForFraud } from '@/ai/flows/analyze-image-fraud';
+import { analyzeImageForFraud } from '@/ai/flows/analyze-image-fraud-enhanced';
 import { createCorsResponse, handleCorsPreflightRequest } from '@/lib/cors';
 import { z } from 'zod';
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Call the AI analysis flow
     console.log('🤖 Calling analyzeImageForFraud...');
-    const result = await analyzeImageForFraud({ photoDataUri: imageData });
+    const result = await analyzeImageForFraud({ imageData: imageData, fileName: body.fileName });
     console.log('✅ Image analysis completed:', { 
       isFraudulent: result.isFraudulent, 
       confidenceScore: result.confidenceScore,

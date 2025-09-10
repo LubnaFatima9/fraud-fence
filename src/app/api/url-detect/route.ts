@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzeUrlForFraud } from '@/ai/flows/analyze-url-fraud';
+import { analyzeUrlForFraud } from '@/ai/flows/analyze-url-fraud-enhanced';
 import { createCorsResponse, handleCorsPreflightRequest } from '@/lib/cors';
 import { z } from 'zod';
 
@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
     console.log('🤖 Calling analyzeUrlForFraud...');
     const result = await analyzeUrlForFraud({ url });
     console.log('✅ URL analysis completed:', { 
-      isSafe: result.isSafe, 
+      isFraudulent: result.isFraudulent, 
+      confidenceScore: result.confidenceScore,
       threatTypes: result.threatTypes,
       explanationLength: result.explanation?.length 
     });

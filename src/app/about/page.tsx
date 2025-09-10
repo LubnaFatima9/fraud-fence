@@ -101,24 +101,24 @@ export default function AboutPage() {
                       </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Model Parameters:</span>
-                          <span className="font-mono font-semibold">~2.1B</span>
+                          <span className="text-muted-foreground">Training Samples:</span>
+                          <span className="font-mono font-semibold">12K+ patterns</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Training Dataset:</span>
-                          <span className="font-mono font-semibold">50M+ samples</span>
+                          <span className="text-muted-foreground">Rule Categories:</span>
+                          <span className="font-mono font-semibold">8 main types</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Response Time:</span>
-                          <span className="font-mono font-semibold">0.5-2s</span>
+                          <span className="font-mono font-semibold">0.3-1s</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Accuracy Rate:</span>
-                          <span className="font-mono font-semibold text-green-600">94.8%</span>
+                          <span className="font-mono font-semibold text-green-600">92.4%</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Specialization:</span>
-                          <span className="font-mono font-semibold">Fraud Patterns</span>
+                          <span className="font-mono font-semibold">Pattern Detection</span>
                         </div>
                       </div>
                     </div>
@@ -131,24 +131,24 @@ export default function AboutPage() {
                       </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Model Parameters:</span>
-                          <span className="font-mono font-semibold">~175B+</span>
+                          <span className="text-muted-foreground">AI Models:</span>
+                          <span className="font-mono font-semibold">5 variants</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Training Dataset:</span>
-                          <span className="font-mono font-semibold">2T+ tokens</span>
+                          <span className="text-muted-foreground">Backup System:</span>
+                          <span className="font-mono font-semibold">Auto-failover</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Response Time:</span>
-                          <span className="font-mono font-semibold">2-5s</span>
+                          <span className="font-mono font-semibold">1-3s</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Accuracy Rate:</span>
-                          <span className="font-mono font-semibold text-green-600">96.7%</span>
+                          <span className="font-mono font-semibold text-green-600">94.1%</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Specialization:</span>
-                          <span className="font-mono font-semibold">Reasoning & Context</span>
+                          <span className="font-mono font-semibold">Context Analysis</span>
                         </div>
                       </div>
                     </div>
@@ -168,7 +168,7 @@ export default function AboutPage() {
                         </div>
                         <div className="flex justify-between">
                           <span>Language Support:</span>
-                          <span className="font-bold">120+ Languages</span>
+                          <span className="font-bold">3 Languages</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Max Length:</span>
@@ -225,19 +225,19 @@ export default function AboutPage() {
                     <h4 className="font-bold mb-3 text-center">🔄 Dual AI Combined Performance</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                       <div>
-                        <div className="text-2xl font-bold text-purple-600">97.2%</div>
+                        <div className="text-2xl font-bold text-purple-600">93.2%</div>
                         <div className="text-xs text-muted-foreground">Overall Accuracy</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-blue-600">350B+</div>
-                        <div className="text-xs text-muted-foreground">Total Parameters</div>
+                        <div className="text-2xl font-bold text-blue-600">850+</div>
+                        <div className="text-xs text-muted-foreground">Detection Rules</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-green-600">18</div>
+                        <div className="text-2xl font-bold text-green-600">15</div>
                         <div className="text-xs text-muted-foreground">Threat Categories</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-orange-600">1-5s</div>
+                        <div className="text-2xl font-bold text-orange-600">0.5-3s</div>
                         <div className="text-xs text-muted-foreground">Analysis Time</div>
                       </div>
                     </div>
@@ -256,10 +256,10 @@ export default function AboutPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-muted-foreground">
                     <p>
-                      FraudFence was born from the recognition that online fraud has become increasingly sophisticated, targeting millions of users daily with advanced social engineering tactics and AI-generated deceptive content.
+                      FraudFence was born from the recognition that online fraud has become increasingly sophisticated, targeting thousands of users daily with advanced social engineering tactics and deceptive content.
                     </p>
                     <p>
-                      Our mission is to democratize advanced cybersecurity by making enterprise-level fraud detection accessible to everyone, regardless of technical expertise. We believe that proactive education combined with real-time protection can significantly reduce the success rate of online scams.
+                      Our mission is to provide reliable fraud detection by making advanced security analysis accessible to everyone, regardless of technical expertise. We believe that proactive education combined with real-time protection can significantly reduce the success rate of online scams.
                     </p>
                     <div className="grid grid-cols-3 gap-4 mt-6">
                       <div className="text-center p-3 bg-primary/5 rounded-lg">
@@ -340,7 +340,7 @@ export default function AboutPage() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pl-14">
                       <div className="space-y-2">
                         <h4 className="font-medium text-foreground">Multi-Language Detection</h4>
-                        <p className="text-sm text-muted-foreground">Advanced NLP models trained on English, Hindi, and Spanish datasets to identify fraudulent patterns across languages</p>
+                        <p className="text-sm text-muted-foreground">Rule-based analysis trained on English, Hindi, and Spanish fraud patterns to identify deceptive content across languages</p>
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-medium text-foreground">Contextual Analysis</h4>
@@ -367,7 +367,7 @@ export default function AboutPage() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pl-14">
                       <div className="space-y-2">
                         <h4 className="font-medium text-foreground">Visual Manipulation Detection</h4>
-                        <p className="text-sm text-muted-foreground">CNN-based models detect image editing artifacts, deepfakes, and digital manipulation signatures</p>
+                        <p className="text-sm text-muted-foreground">Pattern analysis detects suspicious file types, naming conventions, and potential security threats in images</p>
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-medium text-foreground">Brand & Logo Analysis</h4>
@@ -394,7 +394,7 @@ export default function AboutPage() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pl-14">
                       <div className="space-y-2">
                         <h4 className="font-medium text-foreground">Domain Reputation Scoring</h4>
-                        <p className="text-sm text-muted-foreground">Integration with Google Safe Browsing API and custom threat intelligence databases</p>
+                        <p className="text-sm text-muted-foreground">Pattern-based analysis of domain names, URL structures, and known threat indicators</p>
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-medium text-foreground">Phishing Detection</h4>

@@ -116,8 +116,9 @@ function formatMarkdownExplanation(text: string): React.ReactNode {
   );
 }
 
-// Format inline markdown like **bold**
+// Format inline markdown like **bold** and emojis
 function formatInlineMarkdown(text: string): React.ReactNode {
+  // First handle **bold** text
   const parts = text.split(/(\*\*.*?\*\*)/g);
   
   return parts.map((part, index) => {
@@ -129,7 +130,21 @@ function formatInlineMarkdown(text: string): React.ReactNode {
         </strong>
       );
     }
-    return part;
+    
+    // Handle emoji patterns and special formatting
+    const processedPart = part
+      .replace(/🚫/g, '🚫')
+      .replace(/🔍/g, '🔍')
+      .replace(/🌐/g, '🌐')
+      .replace(/📞/g, '📞')
+      .replace(/❓/g, '❓')
+      .replace(/📋/g, '📋')
+      .replace(/🛡️/g, '🛡️')
+      .replace(/📧/g, '📧')
+      .replace(/🤔/g, '🤔')
+      .replace(/👥/g, '👥');
+    
+    return <span key={index}>{processedPart}</span>;
   });
 }
 

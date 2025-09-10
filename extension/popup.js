@@ -1,17 +1,20 @@
+// Debug logging
+console.log('🔧 Loading popup.js...');
+
 // API Configuration - Local Next.js endpoints
 const API_BASE_URL = 'http://localhost:9005/api';
 
 const API_CONFIG = {
     text: {
-        endpoint: `${API_BASE_URL}/analyze-text`,
+        endpoint: `${API_BASE_URL}/text-detect`,
         type: 'local'
     },
     image: {
-        endpoint: `${API_BASE_URL}/analyze-image`,
+        endpoint: `${API_BASE_URL}/image-detect`,
         type: 'local'
     },
     url: {
-        endpoint: `${API_BASE_URL}/analyze-url`,
+        endpoint: `${API_BASE_URL}/url-detect`,
         type: 'local'
     }
 };
@@ -27,18 +30,51 @@ let currentTab = 'text';
 let selectedImage = null;
 let currentUrl = null;
 
+// Statistics tracking
+let analysisCount = 0;
+let threatCount = 0;
+
+console.log('🔧 Popup.js loaded, setting up DOM listener...');
+
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    initializeTabs();
-    initializeImageUpload();
-    initializeAnalyzeButtons();
-    initializeResultActions();
-    initializeHistory();
-    loadFromContextMenu();
-    checkCurrentPageUrl();
-    checkForPageScanResults(); // Check if there are recent page scan results
-    setupMessageListeners(); // Listen for context menu results
+    console.log('🚀 Fraud Fence popup initializing...');
+    
+    try {
+        console.log('📋 Initializing tabs...');
+        initializeTabs();
+        console.log('🖼️ Initializing image upload...');
+        initializeImageUpload();
+        console.log('🔍 Initializing analyze buttons...');
+        initializeAnalyzeButtons();
+        console.log('⚡ Initializing result actions...');
+        initializeResultActions();
+        console.log('📚 Initializing history...');
+        initializeHistory();
+        
+        console.log('🔄 Setting up async functions...');
+        // Initialize async functions with error handling
+        setTimeout(() => {
+            console.log('📭 Loading context menu...');
+            loadFromContextMenu().catch(e => console.log('📭 Context menu load skipped:', e.message));
+            console.log('🌐 Checking current URL...');
+            checkCurrentPageUrl().catch(e => console.log('📭 URL check skipped:', e.message));
+            console.log('📄 Checking page scan results...');
+            checkForPageScanResults().catch(e => console.log('📭 Page scan check skipped:', e.message));
+            console.log('📊 Loading stats...');
+            loadStats().catch(e => console.log('📊 Stats loading skipped:', e.message));
+        }, 100);
+        
+        console.log('📨 Setting up message listeners...');
+        setupMessageListeners();
+        
+        console.log('✅ Fraud Fence popup initialized successfully');
+    } catch (error) {
+        console.error('❌ Error initializing popup:', error);
+    }
 });
+
+console.log('🔧 DOM event listener set up');
 
 /**
  * Initialize tab switching functionality
@@ -75,9 +111,18 @@ function initializeTabs() {
  */
 async function checkCurrentPageUrl() {
     try {
+        // Check if chrome.tabs API is available
+        if (!chrome.tabs || !chrome.tabs.query) {
+            console.log('📭 Chrome tabs API not available');
+            return;
+        }
+        
         // Get current active tab
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab || !tab.url) return;
+        if (!tab || !tab.url) {
+            console.log('📭 No active tab found');
+            return;
+        }
         
         currentUrl = tab.url;
         
@@ -103,14 +148,28 @@ async function checkCurrentPageUrl() {
             </div>
         `;
         
-        // Analyze the URL
-        const result = await analyzeContent('url', tab.url, false); // Don't save to history automatically
-        displayCurrentUrlResult(result, tab.url);
+        try {
+            // Analyze the URL
+            const result = await analyzeContent('url', tab.url, false); // Don't save to history automatically
+            displayCurrentUrlResult(result, tab.url);
+        } catch (analysisError) {
+            // Show safe status if analysis fails
+            document.getElementById('current-url-status').innerHTML = `
+                <div class="status-safe">
+                    ℹ️ Analysis unavailable
+                </div>
+            `;
+            document.getElementById('current-url-details').innerHTML = `
+                <div class="url-text">${tab.url}</div>
+                <small>Connect to local server for URL analysis</small>
+            `;
+            console.log('URL analysis skipped - server not available:', analysisError.message);
+        }
         
     } catch (error) {
         console.error('Error checking current URL:', error);
         document.getElementById('current-url-status').innerHTML = `
-            <div class="status-loading">
+            <div class="status-safe">
                 ❌ Error checking page
             </div>
         `;
@@ -242,8 +301,11 @@ function initializeAnalyzeButtons() {
  * Initialize result action buttons
  */
 function initializeResultActions() {
-    document.getElementById('clear-results').addEventListener('click', clearResults);
-    document.getElementById('report-false-positive').addEventListener('click', reportFalsePositive);
+    document.getElementById('clear-results')?.addEventListener('click', clearResults);
+    document.getElementById('report-issue')?.addEventListener('click', () => {
+        showCustomNotification('info', 'Report Submitted', 'Thank you for reporting this issue. Our team will review it.');
+    });
+    document.getElementById('view-details')?.addEventListener('click', openDetailedAnalysis);
 }
 
 /**
@@ -618,9 +680,6 @@ function showResults(data, analysisType = null) {
     hideLoading();
     
     const resultsDiv = document.getElementById('results');
-    const statusDiv = document.getElementById('result-status');
-    const scoreDiv = document.getElementById('result-score');
-    const detailsDiv = document.getElementById('result-details');
     
     // Clear any existing page scan details
     const existingPageScanDetails = document.querySelector('.page-scan-details');
@@ -628,37 +687,162 @@ function showResults(data, analysisType = null) {
         existingPageScanDetails.remove();
     }
     
-    // Determine status and styling
-    const { isFraud, confidence, details, riskLevel } = parseResultData(data);
+    // Parse result data
+    const { isFraud, confidence, details, riskLevel, threatTypes, explanation } = parseResultData(data);
     
-    // Update status with analysis type if provided
-    statusDiv.className = `result-status ${getRiskClass(riskLevel)}`;
-    const statusText = analysisType ? `${analysisType}: ${getRiskText(riskLevel)}` : getRiskText(riskLevel);
-    statusDiv.innerHTML = `${getRiskIcon(riskLevel)} ${statusText}`;
+    // Update fraud meter
+    updateFraudMeter(confidence, riskLevel);
     
-    // Update confidence score
-    scoreDiv.textContent = `${Math.round(confidence)}% confidence`;
+    // Update result header
+    updateResultHeader(riskLevel, analysisType);
     
-    // Update details
-    const formattedDetails = analysisType === 'Page Scan' && data.pageUrl ? 
-        `<strong>URL:</strong> ${data.pageUrl}<br><br>${formatDetails(details)}` : 
-        formatDetails(details);
-    detailsDiv.innerHTML = formattedDetails;
+    // Update threat types (if available)
+    updateThreatTypes(threatTypes || []);
+    
+    // Update analysis details
+    updateAnalysisDetails(explanation || details, data.pageUrl);
+    
+    // Store analysis data globally for detailed view
+    window.currentAnalysisData = {
+        confidence,
+        riskLevel,
+        threatTypes: threatTypes || [],
+        explanation: explanation || details,
+        contentType: analysisType || 'Content',
+        originalContent: data.originalContent || data.content || 'Content analyzed',
+        timestamp: new Date().toISOString(),
+        ...data
+    };
+    
+    // Update statistics
+    const hasThreats = (threatTypes && threatTypes.length > 0) || confidence > 70;
+    incrementStats(hasThreats);
     
     // Show results
     resultsDiv.style.display = 'block';
+}
+
+function updateFraudMeter(confidence, riskLevel) {
+    const percentage = document.querySelector('.percentage');
+    const riskLevelSpan = document.querySelector('.risk-level');
+    const progressBar = document.querySelector('.progress-bar');
+    const meterSection = document.querySelector('.fraud-meter-section');
+    
+    if (!percentage || !riskLevelSpan || !progressBar || !meterSection) return;
+    
+    // Update percentage
+    percentage.textContent = `${Math.round(confidence)}%`;
+    
+    // Update risk level text and colors
+    const riskClass = getRiskClass(riskLevel);
+    meterSection.className = `fraud-meter-section risk-${riskClass}`;
+    
+    let riskText = '';
+    switch (riskClass) {
+        case 'high':
+            riskText = 'High Risk';
+            break;
+        case 'medium':
+            riskText = 'Suspicious';
+            break;
+        default:
+            riskText = 'Low Risk';
+    }
+    riskLevelSpan.textContent = riskText;
+    
+    // Animate progress bar
+    setTimeout(() => {
+        progressBar.style.width = `${confidence}%`;
+    }, 100);
+}
+
+function updateResultHeader(riskLevel, analysisType) {
+    const resultIcon = document.querySelector('.result-icon');
+    const resultTitle = document.querySelector('.result-title');
+    const resultSubtitle = document.querySelector('.result-subtitle');
+    
+    if (!resultIcon || !resultTitle || !resultSubtitle) return;
+    
+    const icon = getRiskIcon(riskLevel);
+    const title = getRiskText(riskLevel);
+    const subtitle = analysisType ? `Analysis Type: ${analysisType}` : 'Fraud Detection Analysis';
+    
+    resultIcon.textContent = icon;
+    resultTitle.textContent = title;
+    resultSubtitle.textContent = subtitle;
+}
+
+function updateThreatTypes(threatTypes) {
+    const threatSection = document.querySelector('.threat-types-section');
+    const threatBadges = document.querySelector('.threat-badges');
+    
+    if (!threatSection || !threatBadges) return;
+    
+    if (threatTypes && threatTypes.length > 0) {
+        threatSection.style.display = 'block';
+        threatBadges.innerHTML = threatTypes
+            .map(threat => `<span class="threat-badge">${threat}</span>`)
+            .join('');
+    } else {
+        threatSection.style.display = 'none';
+    }
+}
+
+function updateAnalysisDetails(details, pageUrl) {
+    const analysisContent = document.querySelector('.analysis-content');
+    
+    if (!analysisContent) return;
+    
+    let formattedDetails = '';
+    
+    if (pageUrl) {
+        formattedDetails += `**URL Analyzed:** ${pageUrl}\n\n`;
+    }
+    
+    if (typeof details === 'string') {
+        formattedDetails += details;
+    } else if (Array.isArray(details)) {
+        formattedDetails += details.join('\n\n');
+    } else if (typeof details === 'object') {
+        formattedDetails += Object.entries(details)
+            .map(([key, value]) => `**${key}:** ${value}`)
+            .join('\n\n');
+    } else {
+        formattedDetails += 'Analysis completed successfully.';
+    }
+    
+    // Convert markdown-like formatting to HTML
+    const htmlContent = formattedDetails
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    
+    analysisContent.innerHTML = `<p>${htmlContent}</p>`;
 }
 
 /**
  * Parse result data from API response
  */
 function parseResultData(data) {
-    // Adapt this based on your actual API response format
+    const confidence = data.confidence || data.score || 0;
+    const isFraud = data.isFraud || data.fraud || confidence > 70;
+    
+    // Determine risk level based on confidence
+    let riskLevel = 'safe';
+    if (confidence > 70) {
+        riskLevel = 'high';
+    } else if (confidence > 40) {
+        riskLevel = 'medium';
+    }
+    
     return {
-        isFraud: data.isFraud || data.fraud || false,
-        confidence: data.confidence || data.score || 0,
+        isFraud,
+        confidence,
         details: data.details || data.analysis || 'No additional details available.',
-        riskLevel: data.riskLevel || (data.isFraud ? 'fraud' : 'safe')
+        riskLevel: data.riskLevel || riskLevel,
+        threatTypes: data.threatTypes || data.threats || [],
+        explanation: data.explanation || data.details || data.analysis
     };
 }
 
@@ -669,12 +853,12 @@ function getRiskClass(riskLevel) {
     switch (riskLevel.toLowerCase()) {
         case 'fraud':
         case 'high':
-            return 'fraud';
+            return 'high';
         case 'suspicious':
         case 'medium':
-            return 'suspicious';
+            return 'medium';
         default:
-            return 'safe';
+            return 'low';
     }
 }
 
@@ -738,14 +922,36 @@ function showError(message) {
     hideLoading();
     
     const resultsDiv = document.getElementById('results');
-    const statusDiv = document.getElementById('result-status');
-    const scoreDiv = document.getElementById('result-score');
-    const detailsDiv = document.getElementById('result-details');
     
-    statusDiv.className = 'result-status';
-    statusDiv.innerHTML = '❌ Error';
-    scoreDiv.textContent = '';
-    detailsDiv.innerHTML = `<p style="color: #dc3545;">${message}</p>`;
+    // Update fraud meter to show error state
+    const percentage = document.querySelector('.percentage');
+    const riskLevelSpan = document.querySelector('.risk-level');
+    const progressBar = document.querySelector('.progress-bar');
+    const meterSection = document.querySelector('.fraud-meter-section');
+    
+    if (percentage) percentage.textContent = '0%';
+    if (riskLevelSpan) riskLevelSpan.textContent = 'Error';
+    if (progressBar) progressBar.style.width = '0%';
+    if (meterSection) meterSection.className = 'fraud-meter-section';
+    
+    // Update result header for error
+    const resultIcon = document.querySelector('.result-icon');
+    const resultTitle = document.querySelector('.result-title');
+    const resultSubtitle = document.querySelector('.result-subtitle');
+    
+    if (resultIcon) resultIcon.textContent = '❌';
+    if (resultTitle) resultTitle.textContent = 'Analysis Error';
+    if (resultSubtitle) resultSubtitle.textContent = 'Unable to complete analysis';
+    
+    // Hide threat types section
+    const threatSection = document.querySelector('.threat-types-section');
+    if (threatSection) threatSection.style.display = 'none';
+    
+    // Update analysis details with error message
+    const analysisContent = document.querySelector('.analysis-content');
+    if (analysisContent) {
+        analysisContent.innerHTML = `<p style="color: #dc2626;"><strong>Error:</strong> ${message}</p>`;
+    }
     
     resultsDiv.style.display = 'block';
 }
@@ -877,15 +1083,26 @@ async function checkForPageScanResults() {
 function setupMessageListeners() {
     // Listen for messages from background script
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.action === 'context-menu-result') {
-            // Display the analysis result immediately
-            showResults(message.result, `Context Menu - ${message.type.charAt(0).toUpperCase() + message.type.slice(1)}`);
-            sendResponse({ success: true });
-        } else if (message.action === 'page-scan-result') {
-            // Handle page scan results
-            checkForPageScanResults();
-            sendResponse({ success: true });
+        console.log('📨 Popup received message:', message);
+        
+        try {
+            if (message.action === 'context-menu-result') {
+                // Display the analysis result immediately
+                showResults(message.result, `Context Menu - ${message.type.charAt(0).toUpperCase() + message.type.slice(1)}`);
+                sendResponse({ success: true });
+                return true; // Keep message channel open for async response
+            } else if (message.action === 'page-scan-result') {
+                // Handle page scan results
+                checkForPageScanResults();
+                sendResponse({ success: true });
+                return true; // Keep message channel open for async response
+            }
+        } catch (error) {
+            console.error('❌ Error handling message:', error);
+            sendResponse({ success: false, error: error.message });
         }
+        
+        return true; // Keep message channel open
     });
     
     // Also check for stored context results when popup opens
@@ -914,4 +1131,332 @@ async function checkForLatestContextResult() {
     } catch (error) {
         console.log('No recent context results to display');
     }
+}
+
+/**
+ * Expand detailed analysis in the same popup
+ */
+function openDetailedAnalysis() {
+    try {
+        console.log('🔍 Expanding detailed analysis...');
+        
+        if (!window.currentAnalysisData) {
+            showNotification('No Data', 'Please run an analysis first before viewing details.');
+            return;
+        }
+        
+        // Hide the main interface
+        document.querySelector('.container').style.display = 'none';
+        
+        // Create or show detailed analysis view
+        let detailedView = document.getElementById('detailed-analysis-view');
+        if (!detailedView) {
+            detailedView = createDetailedAnalysisView();
+            document.body.appendChild(detailedView);
+        }
+        
+        // Populate with current analysis data
+        populateDetailedAnalysis(window.currentAnalysisData);
+        
+        // Show the detailed view
+        detailedView.style.display = 'block';
+        
+        console.log('✅ Detailed analysis expanded');
+        
+    } catch (error) {
+        console.error('❌ Error opening detailed analysis:', error);
+        showNotification('Error', `Failed to open detailed analysis: ${error.message}`);
+    }
+}
+
+/**
+ * Create detailed analysis view HTML
+ */
+function createDetailedAnalysisView() {
+    const detailedView = document.createElement('div');
+    detailedView.id = 'detailed-analysis-view';
+    detailedView.className = 'detailed-analysis-container';
+    
+    detailedView.innerHTML = `
+        <div class="detailed-header">
+            <button id="back-to-main" class="back-btn">← Back to Analysis</button>
+            <h2>Detailed Fraud Analysis</h2>
+            <button id="download-json" class="download-btn">📥 Download JSON</button>
+        </div>
+        
+        <div class="detailed-content">
+            <div class="fraud-meter-detailed">
+                <h3>Fraud Risk Assessment</h3>
+                <div class="meter-container">
+                    <div class="meter-score" id="detailed-score">0%</div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="detailed-meter-fill"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>Safe</span>
+                        <span>Suspicious</span>
+                        <span>Fraud</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-info" id="detailed-analysis-info">
+                <h3>Analysis Details</h3>
+                <div id="detailed-explanation"></div>
+            </div>
+            
+            <div class="threats-section" id="detailed-threats" style="display: none;">
+                <h3>Detected Threats</h3>
+                <div id="threat-badges"></div>
+            </div>
+            
+            <div class="technical-info">
+                <h3>Technical Information</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <span class="tech-label">Analysis Type:</span>
+                        <span class="tech-value" id="analysis-type-detail">-</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">Confidence Score:</span>
+                        <span class="tech-value" id="confidence-detail">-</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">Risk Level:</span>
+                        <span class="tech-value" id="risk-level-detail">-</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">Analysis Time:</span>
+                        <span class="tech-value" id="analysis-time-detail">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add event listeners
+    setTimeout(() => {
+        document.getElementById('back-to-main')?.addEventListener('click', () => {
+            detailedView.style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+        });
+        
+        document.getElementById('download-json')?.addEventListener('click', downloadAnalysisJSON);
+    }, 100);
+    
+    return detailedView;
+}
+
+/**
+ * Populate detailed analysis view with data
+ */
+function populateDetailedAnalysis(data) {
+    try {
+        // Update score and meter
+        const score = data.confidence || 0;
+        document.getElementById('detailed-score').textContent = `${Math.round(score)}%`;
+        
+        // Update meter fill based on confidence
+        const meterFill = document.getElementById('detailed-meter-fill');
+        if (meterFill) {
+            const fillPercentage = Math.min(Math.max(score, 0), 100);
+            meterFill.style.width = `${fillPercentage}%`;
+            
+            // Set color based on risk level
+            if (score >= 70) {
+                meterFill.style.backgroundColor = '#ef4444'; // Red for high risk
+            } else if (score >= 30) {
+                meterFill.style.backgroundColor = '#f59e0b'; // Yellow for medium risk
+            } else {
+                meterFill.style.backgroundColor = '#10b981'; // Green for low risk
+            }
+        }
+        
+        // Update explanation
+        const explanation = data.explanation || 'No detailed explanation available.';
+        const explanationElement = document.getElementById('detailed-explanation');
+        if (explanationElement) {
+            // Convert markdown-like formatting
+            const formattedExplanation = explanation
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            explanationElement.innerHTML = formattedExplanation;
+        }
+        
+        // Update threats section
+        if (data.threats && data.threats.length > 0) {
+            const threatsSection = document.getElementById('detailed-threats');
+            const threatBadges = document.getElementById('threat-badges');
+            
+            if (threatBadges) {
+                threatBadges.innerHTML = data.threats.map(threat => 
+                    `<span class="threat-badge threat-${threat.toLowerCase().replace(/\s+/g, '-')}">${threat}</span>`
+                ).join('');
+                threatsSection.style.display = 'block';
+            }
+        }
+        
+        // Update technical info
+        document.getElementById('analysis-type-detail').textContent = data.type || 'Unknown';
+        document.getElementById('confidence-detail').textContent = `${Math.round(data.confidence || 0)}%`;
+        
+        // Determine risk level
+        const riskLevel = data.confidence >= 70 ? 'High Risk' : 
+                         data.confidence >= 30 ? 'Medium Risk' : 'Low Risk';
+        document.getElementById('risk-level-detail').textContent = riskLevel;
+        document.getElementById('analysis-time-detail').textContent = new Date().toLocaleString();
+        
+    } catch (error) {
+        console.error('❌ Error populating detailed analysis:', error);
+    }
+}
+
+/**
+ * Download analysis results as JSON
+ */
+function downloadAnalysisJSON() {
+    try {
+        if (!window.currentAnalysisData) {
+            showNotification('No Data', 'No analysis data available to download.');
+            return;
+        }
+        
+        const dataStr = JSON.stringify(window.currentAnalysisData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fraud-analysis-${Date.now()}.json`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        
+        showNotification('Download Complete', 'Analysis results saved as JSON file.');
+        console.log('✅ JSON download completed');
+        
+    } catch (error) {
+        console.error('❌ Error downloading JSON:', error);
+        showNotification('Download Error', 'Failed to download analysis results.');
+    }
+}
+
+/**
+ * Chrome-style notification system
+ */
+function showNotification(title, message, type = 'basic') {
+    // Use Chrome notifications API
+    if (chrome.notifications) {
+        const notificationOptions = {
+            type: 'basic',
+            iconUrl: 'icons/icon48.png',
+            title: title,
+            message: message
+        };
+        
+        chrome.notifications.create(notificationOptions, (notificationId) => {
+            if (chrome.runtime.lastError) {
+                console.log('Notification error:', chrome.runtime.lastError);
+                // Fallback to simple alert
+                alert(`${title}: ${message}`);
+            } else {
+                console.log('Notification created:', notificationId);
+            }
+        });
+    } else {
+        // Fallback to alert
+        alert(`${title}: ${message}`);
+    }
+}
+
+/**
+ * Legacy function name for compatibility
+ */
+function showCustomNotification(type = 'info', title = '', message = '') {
+    showNotification(title, message, type);
+}
+
+/**
+ * Close notification
+ */
+function closeNotification(notificationId) {
+    const notification = document.getElementById(notificationId);
+    if (notification) {
+        notification.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }
+}
+
+// Make closeNotification globally available
+window.closeNotification = closeNotification;
+
+/**
+ * Load statistics from storage
+ */
+async function loadStats() {
+    try {
+        // Check if chrome.storage API is available
+        if (!chrome.storage || !chrome.storage.local) {
+            console.log('📭 Chrome storage API not available');
+            return;
+        }
+        
+        const result = await chrome.storage.local.get(['analysisCount', 'threatCount']);
+        analysisCount = result.analysisCount || 0;
+        threatCount = result.threatCount || 0;
+        updateStatsDisplay();
+        console.log('📊 Stats loaded:', { analysisCount, threatCount });
+    } catch (error) {
+        console.error('❌ Error loading stats:', error);
+    }
+}
+
+/**
+ * Update statistics display in header
+ */
+function updateStatsDisplay() {
+    const analysisCountSpan = document.querySelector('.stat-value:first-child');
+    const threatCountSpan = document.querySelector('.stat-value:last-child');
+    
+    if (analysisCountSpan) analysisCountSpan.textContent = analysisCount.toLocaleString();
+    if (threatCountSpan) threatCountSpan.textContent = threatCount.toLocaleString();
+}
+
+/**
+ * Increment analysis statistics
+ */
+async function incrementStats(isThreats = false) {
+    analysisCount++;
+    if (isThreats) {
+        threatCount++;
+    }
+    
+    // Save to storage
+    await chrome.storage.local.set({
+        analysisCount: analysisCount,
+        threatCount: threatCount
+    });
+    
+    updateStatsDisplay();
+}
+
+console.log('🔧 Making functions globally available...');
+
+// Make all functions globally available for debugging
+try {
+    window.openDetailedAnalysis = openDetailedAnalysis;
+    console.log('✅ openDetailedAnalysis assigned');
+    window.showCustomNotification = showCustomNotification;
+    console.log('✅ showCustomNotification assigned');
+    window.incrementStats = incrementStats;
+    console.log('✅ incrementStats assigned');
+    window.loadStats = loadStats;
+    console.log('✅ loadStats assigned');
+    
+    console.log('✅ Popup.js loaded completely - all functions available');
+} catch (error) {
+    console.error('❌ Error assigning global functions:', error);
 }

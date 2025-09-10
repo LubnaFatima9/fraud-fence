@@ -108,9 +108,14 @@ const analyzeTextForFraudFlow = ai.defineFlow(
     outputSchema: AnalyzeTextForFraudOutputSchema,
   },
   async input => {
-    // 1. Detect the language
-    const langResult = await detectLanguagePrompt({ text: input.text });
-    const sourceLanguage = langResult.output?.language || 'en';
+    try {
+      console.log('🔍 Starting text fraud analysis for text:', input.text.substring(0, 50) + '...');
+
+      // 1. Detect the language
+      console.log('🌐 Attempting language detection...');
+      const langResult = await detectLanguagePrompt({ text: input.text });
+      const sourceLanguage = langResult.output?.language || 'en';
+      console.log('🌐 Detected language:', sourceLanguage);
 
     let textToAnalyze = input.text;
 
@@ -135,28 +140,36 @@ const analyzeTextForFraudFlow = ai.defineFlow(
     let geminiResult = { isFraudulent: false, confidenceScore: 0.5, available: false };
     let explanation;
 
-    // Parallel analysis - Cogniflow and Gemini
+    // Parallel analysis - Cogniflow and Gemini with timeout
+    console.log('🚀 Starting parallel AI analysis...');
     const [cogniflowResponse, geminiResponse] = await Promise.allSettled([
-        // Cogniflow analysis
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'Content-Type': 'application/json',
-                'x-api-key': cogniflowApiKey,
-            },
-            body: JSON.stringify({
-                text: textToAnalyze,
+        // Cogniflow analysis with timeout
+        Promise.race([
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'x-api-key': cogniflowApiKey,
+                },
+                body: JSON.stringify({
+                    text: textToAnalyze,
+                }),
             }),
-        }),
-        // Gemini analysis
-        fraudAnalysisPrompt({ text: textToAnalyze })
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Cogniflow timeout')), 15000))
+        ]),
+        // Gemini analysis with timeout
+        Promise.race([
+            fraudAnalysisPrompt({ text: textToAnalyze }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini timeout')), 15000))
+        ])
     ]);
 
     // Process Cogniflow result
-    if (cogniflowResponse.status === 'fulfilled' && cogniflowResponse.value.ok) {
+    if (cogniflowResponse.status === 'fulfilled' && cogniflowResponse.value && typeof cogniflowResponse.value === 'object' && 'ok' in cogniflowResponse.value && cogniflowResponse.value.ok) {
         try {
-            const result = await cogniflowResponse.value.json();
+            const response = cogniflowResponse.value as Response;
+            const result = await response.json();
             console.log('🧠 Cogniflow Text API Response:', result);
             
             if (result.result) {
@@ -182,8 +195,8 @@ const analyzeTextForFraudFlow = ai.defineFlow(
     }
 
     // Process Gemini result
-    if (geminiResponse.status === 'fulfilled' && geminiResponse.value.output) {
-        const geminiOutput = geminiResponse.value.output;
+    if (geminiResponse.status === 'fulfilled' && geminiResponse.value && typeof geminiResponse.value === 'object' && 'output' in geminiResponse.value) {
+        const geminiOutput = (geminiResponse.value as any).output;
         geminiResult.isFraudulent = geminiOutput.isFraudulent || false;
         geminiResult.confidenceScore = geminiOutput.confidenceScore || 0.5;
         geminiResult.available = true;
@@ -224,8 +237,10 @@ const analyzeTextForFraudFlow = ai.defineFlow(
         finalConfidenceScore = geminiResult.confidenceScore;
         console.log('🤖 Using Gemini only (Cogniflow unavailable)');
     } else {
-        // Both failed - fallback
-        throw new Error("Both Cogniflow and Gemini analysis failed.");
+        // Both failed - use safe fallback values
+        console.warn('⚠️ Both Cogniflow and Gemini analysis failed, using fallback values');
+        finalIsFraudulent = false; // Default to safe when uncertain
+        finalConfidenceScore = 0.5; // Medium confidence
     }
 
     // Ensure we have an explanation
@@ -319,5 +334,22 @@ const analyzeTextForFraudFlow = ai.defineFlow(
       explanation: finalExplanation,
       threatTypes,
     };
+    
+    } catch (error) {
+      console.error('❌ Critical error in text fraud analysis:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack?.substring(0, 500) : undefined,
+        errorType: error?.constructor?.name,
+        fullError: error
+      });
+      
+      // Return a safe fallback response
+      return {
+        isFraudulent: false,
+        confidenceScore: 0.5,
+        explanation: `**Analysis Unavailable**\n\nWe're currently experiencing technical difficulties with our fraud detection system. Please try again in a few moments.\n\n**General Safety Tips:**\n- Be cautious of urgent requests for personal information\n- Verify sender identity through alternative channels\n- Don't click suspicious links or download unexpected attachments\n- Trust your instincts - if something seems off, it probably is\n\nIf this issue persists, please contact support.`,
+        threatTypes: []
+      };
+    }
   }
 );
