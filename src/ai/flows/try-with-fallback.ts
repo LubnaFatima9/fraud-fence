@@ -10,8 +10,8 @@
 import { PromptAction } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 
-const primaryModel = googleAI.model('gemini-pro');
-const secondaryModel = googleAI.model('gemini-pro');
+const primaryModel = googleAI.model('gemini-2.0-flash-exp');
+const secondaryModel = googleAI.model('gemini-2.0-flash-thinking-exp');
 
 /**
  * Executes a Genkit prompt with a primary model, falling back to a secondary model if the primary fails.
