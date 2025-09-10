@@ -57,19 +57,31 @@ function formatMarkdownExplanation(text: string): React.ReactNode {
               const trimmedLine = line.trim();
               
               // Handle headers
+              if (trimmedLine.startsWith('###')) {
+                const headerText = trimmedLine.replace(/^###\s*/, '');
+                return (
+                  <h4 key={lineIndex} className="text-base font-bold text-foreground mt-3 mb-2 flex items-center gap-2">
+                    <div className="w-1 h-5 bg-primary rounded-full"></div>
+                    {formatInlineMarkdown(headerText)}
+                  </h4>
+                );
+              }
+              
               if (trimmedLine.startsWith('##')) {
+                const headerText = trimmedLine.replace(/^##\s*/, '');
                 return (
                   <h3 key={lineIndex} className="text-lg font-bold text-foreground mt-4 mb-2 flex items-center gap-2">
                     <div className="w-1 h-6 bg-primary rounded-full"></div>
-                    {trimmedLine.replace(/^##\s*/, '')}
+                    {formatInlineMarkdown(headerText)}
                   </h3>
                 );
               }
               
               if (trimmedLine.startsWith('#')) {
+                const headerText = trimmedLine.replace(/^#\s*/, '');
                 return (
                   <h2 key={lineIndex} className="text-xl font-bold text-foreground mt-6 mb-3 border-b border-border pb-2">
-                    {trimmedLine.replace(/^#\s*/, '')}
+                    {formatInlineMarkdown(headerText)}
                   </h2>
                 );
               }

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Formatting Test - FraudFence</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-input {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .output {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+        }
+        
+        .output h1 {
+            color: #1f2937;
+            font-size: 24px;
+            margin: 20px 0 15px 0;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        
+        .output h2 {
+            color: #1f2937;
+            font-size: 20px;
+            margin: 18px 0 12px 0;
+        }
+        
+        .output h3 {
+            color: #1f2937;
+            font-size: 18px;
+            margin: 16px 0 10px 0;
+        }
+        
+        .output h4 {
+            color: #1f2937;
+            font-size: 16px;
+            margin: 14px 0 8px 0;
+        }
+        
+        .output strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .output ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .output li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .output p {
+            line-height: 1.7;
+            color: #4b5563;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ FraudFence - Markdown Formatting Test</h1>
+        <p>Test the markdown formatting function used in the extension and website:</p>
+        
+        <textarea class="test-input" id="markdownInput" placeholder="Enter markdown text here...">
+# **Safety Signals**
+
+## **Key Indicators**
+
+### **✅ Positive Indicators**
+- **Valid image format** detected in file structure
+- **🔒 No executable content** found in basic analysis
+- **📊 Risk level remains moderate** based on current assessment
+
+## Recommendations
+
+### **🛡️ GENERAL SECURITY PRACTICES**
+- **🔍 Continue being cautious** - verify sources of unexpected image files
+- **📧 Be skeptical of attachments** from unknown or suspicious senders
+- **🦠 Keep antivirus updated** for ongoing protection against new threats</textarea>
+        
+        <button class="test-btn" onclick="testFormatting()">🔄 Test Formatting</button>
+        
+        <div class="output" id="output">
+            <p><em>Click "Test Formatting" to see the rendered output...</em></p>
+        </div>
+        
+        <h3>Expected Results:</h3>
+        <ul>
+            <li><strong># **Safety Signals**</strong> → Large header with bold text</li>
+            <li><strong>## **Key Indicators**</strong> → Medium header with bold text</li>
+            <li><strong>### **✅ Positive Indicators**</strong> → Smaller header with emoji and bold text</li>
+            <li><strong>- **Valid image format**</strong> → Bullet point with bold text</li>
+        </ul>
+    </div>
+
+    <script>
+        // Copy the formatAnalysisExplanation function from the extension
+        function formatAnalysisExplanation(explanation) {
+            if (!explanation) return 'No detailed explanation available.';
+            
+            // Split into lines for better processing
+            let lines = explanation.split('\n');
+            let formattedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                
+                // Skip empty lines for now
+                if (line.trim() === '') {
+                    formattedLines.push('');
+                    continue;
+                }
+                
+                // Convert headers
+                if (line.match(/^#### /)) {
+                    line = line.replace(/^#### (.+)$/, '<h4>$1</h4>');
+                } else if (line.match(/^### /)) {
+                    line = line.replace(/^### (.+)$/, '<h3>$1</h3>');
+                } else if (line.match(/^## /)) {
+                    line = line.replace(/^## (.+)$/, '<h2>$1</h2>');
+                } else if (line.match(/^# /)) {
+                    line = line.replace(/^# (.+)$/, '<h1>$1</h1>');
+                }
+                // Convert bullet points
+                else if (line.match(/^- /)) {
+                    line = line.replace(/^- (.+)$/, '<li>$1</li>');
+                }
+                // Regular text - wrap in paragraph if not already a tag
+                else if (!line.match(/^<[\/]?(h[1-6]|li|ul|ol)/)) {
+                    line = '<p>' + line + '</p>';
+                }
+                
+                // Convert bold text in the line
+                line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                
+                formattedLines.push(line);
+            }
+            
+            // Join lines and wrap consecutive list items in <ul>
+            let result = formattedLines.join('\n');
+            
+            // Wrap consecutive list items in ul tags
+            result = result.replace(/(<li>.*<\/li>\s*\n?)+/gs, (match) => {
+                return '<ul>\n' + match + '</ul>\n';
+            });
+            
+            // Clean up multiple newlines
+            result = result.replace(/\n\s*\n/g, '\n');
+            
+            // Remove empty paragraphs
+            result = result.replace(/<p>\s*<\/p>/g, '');
+            
+            return result;
+        }
+
+        function testFormatting() {
+            const input = document.getElementById('markdownInput').value;
+            const output = document.getElementById('output');
+            
+            if (!input.trim()) {
+                output.innerHTML = '<p><em>Please enter some markdown text to test...</em></p>';
+                return;
+            }
+            
+            try {
+                const formatted = formatAnalysisExplanation(input);
+                output.innerHTML = formatted;
+                
+                console.log('Input:', input);
+                console.log('Formatted Output:', formatted);
+            } catch (error) {
+                output.innerHTML = `<p style="color: red;"><strong>Error:</strong> ${error.message}</p>`;
+                console.error('Formatting error:', error);
+            }
+        }
+        
+        // Test on page load
+        window.onload = function() {
+            testFormatting();
+        };
+    </script>
+</body>
+</html>

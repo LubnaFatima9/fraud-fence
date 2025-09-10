@@ -1836,24 +1836,59 @@ function openAnalysisInNewTab(analysisData) {
 function formatAnalysisExplanation(explanation) {
     if (!explanation) return 'No detailed explanation available.';
     
-    return explanation
-        // Convert markdown headers
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        // Convert bold text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Split into lines for better processing
+    let lines = explanation.split('\n');
+    let formattedLines = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        
+        // Skip empty lines for now
+        if (line.trim() === '') {
+            formattedLines.push('');
+            continue;
+        }
+        
+        // Convert headers
+        if (line.match(/^#### /)) {
+            line = line.replace(/^#### (.+)$/, '<h4>$1</h4>');
+        } else if (line.match(/^### /)) {
+            line = line.replace(/^### (.+)$/, '<h3>$1</h3>');
+        } else if (line.match(/^## /)) {
+            line = line.replace(/^## (.+)$/, '<h2>$1</h2>');
+        } else if (line.match(/^# /)) {
+            line = line.replace(/^# (.+)$/, '<h1>$1</h1>');
+        }
         // Convert bullet points
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // Wrap consecutive list items in ul
-        .replace(/(<li>.*<\/li>\s*)+/gs, (match) => `<ul>${match}</ul>`)
-        // Convert line breaks
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/^\s*/, '<p>')
-        .replace(/\s*$/, '</p>')
-        // Clean up empty paragraphs
-        .replace(/<p>\s*<\/p>/g, '')
-        .replace(/<p>\s*<h/g, '<h')
-        .replace(/h>\s*<\/p>/g, 'h>');
+        else if (line.match(/^- /)) {
+            line = line.replace(/^- (.+)$/, '<li>$1</li>');
+        }
+        // Regular text - wrap in paragraph if not already a tag
+        else if (!line.match(/^<[\/]?(h[1-6]|li|ul|ol)/)) {
+            line = '<p>' + line + '</p>';
+        }
+        
+        // Convert bold text in the line
+        line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        
+        formattedLines.push(line);
+    }
+    
+    // Join lines and wrap consecutive list items in <ul>
+    let result = formattedLines.join('\n');
+    
+    // Wrap consecutive list items in ul tags
+    result = result.replace(/(<li>.*<\/li>\s*\n?)+/gs, (match) => {
+        return '<ul>\n' + match + '</ul>\n';
+    });
+    
+    // Clean up multiple newlines
+    result = result.replace(/\n\s*\n/g, '\n');
+    
+    // Remove empty paragraphs
+    result = result.replace(/<p>\s*<\/p>/g, '');
+    
+    return result;
 }
 
 /**
