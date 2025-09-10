@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Full-Screen Modal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🛡️ FraudFence Extension Modal Test</h1>
+        <p>Click the buttons below to test the new full-screen analysis modal:</p>
+        
+        <button class="test-btn" onclick="testFraudModal()">Test Fraud Detection Modal</button>
+        <button class="test-btn" onclick="testSuspiciousModal()">Test Suspicious Content Modal</button>
+        <button class="test-btn" onclick="testSafeModal()">Test Safe Content Modal</button>
+        
+        <h3>Features Being Tested:</h3>
+        <ul>
+            <li>✅ Full-screen overlay with proper margins</li>
+            <li>✅ Centered content with maximum 900px width</li>
+            <li>✅ Professional gradient backgrounds</li>
+            <li>✅ Smooth animations and transitions</li>
+            <li>✅ Responsive design for different screen sizes</li>
+            <li>✅ Proper markdown formatting in explanations</li>
+            <li>✅ Close functionality (X button, ESC key, click outside)</li>
+        </ul>
+    </div>
+
+    <script>
+        // Mock analysis data for testing
+        function createTestAnalysisData(isFraud, confidence, explanation, threats = []) {
+            return {
+                isFraudulent: isFraud,
+                confidenceScore: confidence,
+                explanation: explanation,
+                threatTypes: threats,
+                type: 'Text Analysis'
+            };
+        }
+
+        function testFraudModal() {
+            const analysisData = createTestAnalysisData(
+                true, 
+                85, 
+                `## ⚠️ FRAUDULENT CONTENT DETECTED\n\nThis content shows **strong indicators** of being fraudulent with high confidence.\n\n### Key Risk Factors:\n- **Urgent language** designed to create panic\n- **Suspicious links** to unknown domains\n- **Request for personal information** without proper verification\n\n### Immediate Actions Required:\n- **Do not click** any links in this content\n- **Do not provide** personal or financial information\n- **Report this content** to the appropriate authorities\n\n### Educational Context:\nThis appears to be a **phishing attempt** - a common type of social engineering attack where criminals impersonate legitimate organizations to steal sensitive information.`,
+                ['Phishing Attempt', 'Urgent Language', 'Suspicious Links', 'Identity Theft Risk']
+            );
+            
+            window.currentAnalysisData = analysisData;
+            createFullScreenAnalysisModal(analysisData);
+        }
+
+        function testSuspiciousModal() {
+            const analysisData = createTestAnalysisData(
+                false, 
+                65, 
+                `## ⚠️ SUSPICIOUS CONTENT DETECTED\n\nThis content contains **some concerning elements** that warrant caution.\n\n### Warning Signs:\n- **Unusual sender** or source domain\n- **Generic greetings** instead of personalized content\n- **Minor grammar issues** that may indicate non-native speakers\n\n### Recommendations:\n- **Verify the source** through alternative channels\n- **Be cautious** with any requested actions\n- **Double-check** any links before clicking\n\n### Best Practices:\nAlways verify unexpected communications, especially those requesting personal information or urgent actions.`,
+                ['Unusual Sender', 'Generic Content', 'Grammar Issues']
+            );
+            
+            window.currentAnalysisData = analysisData;
+            createFullScreenAnalysisModal(analysisData);
+        }
+
+        function testSafeModal() {
+            const analysisData = createTestAnalysisData(
+                false, 
+                15, 
+                `## ✅ CONTENT APPEARS SAFE\n\nThis content shows **no significant security threats** and appears to be legitimate.\n\n### Safety Indicators:\n- **Legitimate sender** from verified domain\n- **Professional formatting** and language\n- **No suspicious links** or requests\n- **Standard communication** patterns\n\n### General Security Tips:\n- **Continue being cautious** with unexpected communications\n- **Keep security software updated** for ongoing protection\n- **Stay informed** about emerging fraud tactics\n\n### Educational Context:\nWhile this content appears safe, always maintain good security practices and remain vigilant about potential threats.`,
+                []
+            );
+            
+            window.currentAnalysisData = analysisData;
+            createFullScreenAnalysisModal(analysisData);
+        }
+
+        // Include the modal creation function from the extension
+        function parseResultData(result) {
+            if (!result) return { isFraud: false, confidence: 0, riskLevel: 'Unknown', details: 'No data available' };
+            
+            const isFraud = result.isFraudulent || false;
+            const confidence = result.confidenceScore || 0;
+            const riskLevel = isFraud ? 'High' : (confidence > 50 ? 'Medium' : 'Low');
+            const details = result.explanation || 'No details available';
+            
+            return { isFraud, confidence, riskLevel, details };
+        }
+
+        function formatAnalysisExplanation(explanation) {
+            if (!explanation) return 'No detailed explanation available.';
+            
+            return explanation
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>\s*)+/gs, (match) => `<ul>${match}</ul>`)
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^\s*/, '<p>')
+                .replace(/\s*$/, '</p>')
+                .replace(/<p>\s*<\/p>/g, '')
+                .replace(/<p>\s*<h/g, '<h')
+                .replace(/h>\s*<\/p>/g, 'h>');
+        }
+
+        // Include the full modal creation function
+        function createFullScreenAnalysisModal(analysisData) {
+            const existingModal = document.getElementById('full-analysis-modal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            const modal = document.createElement('div');
+            modal.id = 'full-analysis-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(5px);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 40px 20px;
+                animation: fadeIn 0.3s ease-out;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border-radius: 20px;
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+                max-width: 900px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                position: relative;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            const { isFraud, confidence, riskLevel, details } = parseResultData(analysisData);
+            const score = confidence || 0;
+            const statusClass = isFraud ? 'fraud' : (confidence > 50 ? 'suspicious' : 'safe');
+            const statusIcon = isFraud ? '🚨' : (confidence > 50 ? '⚠️' : '✅');
+            const statusText = isFraud ? 'Fraudulent Content Detected' : (confidence > 50 ? 'Suspicious Content' : 'Content Appears Safe');
+            
+            modalContent.innerHTML = `
+                <style>
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideIn {
+                        from { transform: translateY(-50px) scale(0.95); opacity: 0; }
+                        to { transform: translateY(0) scale(1); opacity: 1; }
+                    }
+                    
+                    .modal-header {
+                        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                        color: white;
+                        padding: 30px 40px;
+                        border-radius: 20px 20px 0 0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    
+                    .modal-title {
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    
+                    .modal-title h2 {
+                        font-size: 28px;
+                        font-weight: 700;
+                        margin: 0;
+                    }
+                    
+                    .close-btn {
+                        background: rgba(255, 255, 255, 0.2);
+                        border: none;
+                        color: white;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        font-size: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    }
+                    
+                    .close-btn:hover {
+                        background: rgba(255, 255, 255, 0.3);
+                        transform: scale(1.1);
+                    }
+                    
+                    .modal-body {
+                        padding: 40px;
+                    }
+                    
+                    .status-banner {
+                        background: ${statusClass === 'fraud' ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 
+                                   statusClass === 'suspicious' ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 
+                                   'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'};
+                        border: 2px solid ${statusClass === 'fraud' ? '#ef4444' : statusClass === 'suspicious' ? '#f59e0b' : '#10b981'};
+                        border-radius: 15px;
+                        padding: 25px;
+                        margin-bottom: 30px;
+                        text-align: center;
+                    }
+                    
+                    .status-icon {
+                        font-size: 48px;
+                        margin-bottom: 15px;
+                        display: block;
+                    }
+                    
+                    .status-title {
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: ${statusClass === 'fraud' ? '#dc2626' : statusClass === 'suspicious' ? '#d97706' : '#059669'};
+                        margin-bottom: 10px;
+                    }
+                    
+                    .confidence-score {
+                        font-size: 20px;
+                        font-weight: 600;
+                        color: #374151;
+                    }
+                    
+                    .analysis-section {
+                        background: #f8fafc;
+                        border-radius: 15px;
+                        padding: 25px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #4f46e5;
+                    }
+                    
+                    .section-title {
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: #374151;
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    
+                    .explanation-content {
+                        line-height: 1.7;
+                        color: #4b5563;
+                        font-size: 16px;
+                    }
+                    
+                    .explanation-content h2, .explanation-content h3 {
+                        color: #1f2937;
+                        margin: 20px 0 10px 0;
+                    }
+                    
+                    .explanation-content h2 {
+                        font-size: 22px;
+                        border-bottom: 2px solid #e5e7eb;
+                        padding-bottom: 8px;
+                    }
+                    
+                    .explanation-content h3 {
+                        font-size: 18px;
+                    }
+                    
+                    .explanation-content strong {
+                        font-weight: 700;
+                        color: #1f2937;
+                    }
+                    
+                    .explanation-content ul {
+                        margin: 10px 0 10px 20px;
+                    }
+                    
+                    .explanation-content li {
+                        margin-bottom: 8px;
+                    }
+                    
+                    .tech-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 15px;
+                        margin-top: 20px;
+                    }
+                    
+                    .tech-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 10px;
+                        border: 1px solid #e5e7eb;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 5px;
+                    }
+                    
+                    .tech-label {
+                        font-size: 14px;
+                        color: #6b7280;
+                        font-weight: 500;
+                    }
+                    
+                    .tech-value {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #1f2937;
+                    }
+                    
+                    .threat-badges {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        margin-top: 15px;
+                    }
+                    
+                    .threat-badge {
+                        background: #fee2e2;
+                        color: #dc2626;
+                        padding: 8px 16px;
+                        border-radius: 25px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        border: 1px solid #fecaca;
+                    }
+                </style>
+                
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <span>🛡️</span>
+                        <h2>Detailed Fraud Analysis</h2>
+                    </div>
+                    <button class="close-btn" id="close-modal">×</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="status-banner">
+                        <span class="status-icon">${statusIcon}</span>
+                        <div class="status-title">${statusText}</div>
+                        <div class="confidence-score">Confidence Level: ${Math.round(score)}%</div>
+                    </div>
+                    
+                    <div class="analysis-section">
+                        <h3 class="section-title">
+                            <span>📋</span>
+                            Detailed Analysis
+                        </h3>
+                        <div class="explanation-content">
+                            ${formatAnalysisExplanation(analysisData.explanation || 'No detailed explanation available.')}
+                        </div>
+                    </div>
+                    
+                    ${analysisData.threatTypes && analysisData.threatTypes.length > 0 ? `
+                        <div class="analysis-section">
+                            <h3 class="section-title">
+                                <span>⚠️</span>
+                                Detected Threats
+                            </h3>
+                            <div class="threat-badges">
+                                ${analysisData.threatTypes.map(threat => `<span class="threat-badge">${threat}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="analysis-section">
+                        <h3 class="section-title">
+                            <span>🔧</span>
+                            Technical Information
+                        </h3>
+                        <div class="tech-grid">
+                            <div class="tech-item">
+                                <span class="tech-label">Analysis Type</span>
+                                <span class="tech-value">${analysisData.type || 'General'}</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-label">Risk Level</span>
+                                <span class="tech-value">${riskLevel}</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-label">Confidence Score</span>
+                                <span class="tech-value">${Math.round(score)}%</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-label">Timestamp</span>
+                                <span class="tech-value">${new Date().toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            const closeBtn = modal.querySelector('#close-modal');
+            const closeModal = () => modal.remove();
+            
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+            
+            document.addEventListener('keydown', function escapeClose(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escapeClose);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

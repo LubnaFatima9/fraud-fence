@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Modal Test - New Tab Version</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .features-list {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🛡️ FraudFence Extension - Enhanced Modal Test</h1>
+        <p>Test the new full-screen analysis modal that opens in a new browser tab:</p>
+        
+        <button class="test-btn" onclick="testHighFraudModal()">🚨 Test High Fraud Risk (85%)</button>
+        <button class="test-btn" onclick="testMediumFraudModal()">⚠️ Test Medium Fraud Risk (65%)</button>
+        <button class="test-btn" onclick="testLowFraudModal()">✅ Test Low Fraud Risk (15%)</button>
+        
+        <div class="features-list">
+            <h3>✨ New Features Implemented:</h3>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>New Tab Modal:</strong> Analysis opens in full browser tab instead of cramped popup</span>
+            </div>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>Fixed Confidence Scale:</strong> Properly converts 0-1 to 0-100% fraud risk</span>
+            </div>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>Fraud Risk Terminology:</strong> Changed from "Confidence Level" to "Fraud Risk Level"</span>
+            </div>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>Professional Design:</strong> Large, centered layout with proper margins</span>
+            </div>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>Interactive Meter:</strong> Visual fraud risk meter from 0-100%</span>
+            </div>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>Enhanced Formatting:</strong> Better markdown rendering and visual hierarchy</span>
+            </div>
+            
+            <div class="feature-item">
+                <span>✅</span>
+                <span><strong>Threat Categories:</strong> Color-coded badges for detected threats</span>
+            </div>
+        </div>
+        
+        <p style="margin-top: 20px; color: #6b7280;">
+            <strong>Note:</strong> In the actual extension, clicking "View Details" will open a new browser tab with the detailed analysis results.
+        </p>
+    </div>
+
+    <script>
+        function createTestAnalysisData(isFraud, confidence, explanation, threats = []) {
+            return {
+                isFraudulent: isFraud,
+                confidenceScore: confidence / 100, // Convert to 0-1 scale to test conversion
+                explanation: explanation,
+                threatTypes: threats,
+                type: 'Text Analysis'
+            };
+        }
+
+        function testHighFraudModal() {
+            const analysisData = createTestAnalysisData(
+                true, 
+                85, 
+                `## 🚨 HIGH FRAUD RISK DETECTED\n\nThis content shows **strong indicators** of being fraudulent with high confidence.\n\n### **Critical Risk Factors:**\n- **Urgent language** designed to create panic and immediate action\n- **Suspicious payment requests** without proper verification\n- **Impersonation tactics** mimicking legitimate organizations\n- **Social engineering** techniques to bypass normal caution\n\n### **Immediate Actions Required:**\n- **❌ DO NOT** click any links in this content\n- **❌ DO NOT** provide personal or financial information\n- **📞 VERIFY** through official channels before taking any action\n- **🚨 REPORT** this content to appropriate authorities\n\n### **Educational Context:**\nThis appears to be a **sophisticated phishing attempt** using advanced social engineering tactics. These attacks have increased 67% in the past year, with criminals using AI to create more convincing fraudulent content.`,
+                ['Phishing Attempt', 'Social Engineering', 'Payment Fraud', 'Identity Theft Risk', 'Urgent Language']
+            );
+            
+            openAnalysisInNewWindow(analysisData);
+        }
+
+        function testMediumFraudModal() {
+            const analysisData = createTestAnalysisData(
+                false, 
+                65, 
+                `## ⚠️ MEDIUM FRAUD RISK DETECTED\n\nThis content contains **several concerning elements** that warrant caution and verification.\n\n### **Warning Signs Identified:**\n- **Unusual sender** or unexpected communication source\n- **Generic greetings** instead of personalized content\n- **Pressure tactics** encouraging quick decisions\n- **Spelling or grammar issues** that may indicate non-native speakers\n\n### **Recommended Actions:**\n- **🔍 VERIFY** the source through alternative communication channels\n- **⏸️ PAUSE** before taking any requested actions\n- **🔗 CHECK** any links carefully before clicking\n- **👥 CONSULT** with trusted friends or family if uncertain\n\n### **Safety Guidelines:**\nAlways verify unexpected communications, especially those requesting personal information, money transfers, or urgent actions. Legitimate organizations typically use multiple verification methods.`,
+                ['Suspicious Sender', 'Generic Content', 'Pressure Tactics']
+            );
+            
+            openAnalysisInNewWindow(analysisData);
+        }
+
+        function testLowFraudModal() {
+            const analysisData = createTestAnalysisData(
+                false, 
+                15, 
+                `## ✅ LOW FRAUD RISK - CONTENT APPEARS SAFE\n\nThis content shows **minimal security concerns** and appears to be legitimate communication.\n\n### **Positive Safety Indicators:**\n- **Legitimate sender** from verified domain or known contact\n- **Professional formatting** and appropriate language usage\n- **No suspicious links** or unusual requests detected\n- **Standard communication** patterns consistent with legitimate sources\n- **Proper contact information** and verifiable details provided\n\n### **Continued Best Practices:**\n- **🛡️ MAINTAIN** healthy skepticism with all online communications\n- **🔄 KEEP** security software updated for ongoing protection\n- **📚 STAY INFORMED** about emerging fraud tactics and trends\n- **🤝 SHARE KNOWLEDGE** with family and friends about online safety\n\n### **Educational Context:**\nWhile this content appears safe based on current analysis, cyber threats evolve rapidly. Maintaining good security habits and staying vigilant helps protect against new and emerging fraud tactics. Always trust your instincts if something feels wrong.`,
+                []
+            );
+            
+            openAnalysisInNewWindow(analysisData);
+        }
+
+        function openAnalysisInNewWindow(analysisData) {
+            // Simulate the extension's parseResultData function
+            let confidence = analysisData.confidenceScore || 0;
+            
+            // Convert decimal confidence (0-1) to percentage (0-100)
+            if (confidence <= 1 && confidence >= 0) {
+                confidence = confidence * 100;
+            }
+            
+            const isFraud = analysisData.isFraudulent || confidence > 70;
+            const score = Math.round(confidence);
+            const statusClass = isFraud ? 'fraud' : (confidence > 60 ? 'suspicious' : 'safe');
+            const statusIcon = isFraud ? '🚨' : (confidence > 60 ? '⚠️' : '✅');
+            const statusText = isFraud ? 'Fraudulent Content Detected' : (confidence > 60 ? 'Suspicious Content' : 'Content Appears Safe');
+            
+            // Format explanation
+            const formattedExplanation = formatAnalysisExplanation(analysisData.explanation);
+            
+            // Create the HTML content
+            const htmlContent = createAnalysisHTML(analysisData, statusClass, statusIcon, statusText, score, formattedExplanation);
+            
+            // Open in new window
+            const newWindow = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes,resizable=yes');
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+        }
+
+        function formatAnalysisExplanation(explanation) {
+            if (!explanation) return 'No detailed explanation available.';
+            
+            return explanation
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>\s*)+/gs, (match) => `<ul>${match}</ul>`)
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^\s*/, '<p>')
+                .replace(/\s*$/, '</p>')
+                .replace(/<p>\s*<\/p>/g, '')
+                .replace(/<p>\s*<h/g, '<h')
+                .replace(/h>\s*<\/p>/g, 'h>');
+        }
+
+        function createAnalysisHTML(analysisData, statusClass, statusIcon, statusText, score, formattedExplanation) {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Analysis Results - FraudFence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #333;
+        }
+        .analysis-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .modal-title h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        .modal-body {
+            padding: 40px;
+        }
+        .status-banner {
+            background: \${statusClass === 'fraud' ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 
+                       statusClass === 'suspicious' ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 
+                       'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'};
+            border: 3px solid \${statusClass === 'fraud' ? '#ef4444' : statusClass === 'suspicious' ? '#f59e0b' : '#10b981'};
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .status-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .status-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: \${statusClass === 'fraud' ? '#dc2626' : statusClass === 'suspicious' ? '#d97706' : '#059669'};
+            margin-bottom: 15px;
+        }
+        .fraud-score {
+            font-size: 24px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+        .fraud-meter {
+            width: 100%;
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .fraud-meter-fill {
+            height: 100%;
+            background: \${statusClass === 'fraud' ? 'linear-gradient(90deg, #ef4444, #dc2626)' : 
+                        statusClass === 'suspicious' ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 
+                        'linear-gradient(90deg, #10b981, #059669)'};
+            width: \${score}%;
+            border-radius: 10px;
+            animation: fillMeter 1s ease-out;
+        }
+        @keyframes fillMeter {
+            from { width: 0%; }
+            to { width: \${score}%; }
+        }
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .analysis-section {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4f46e5;
+        }
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .explanation-content {
+            line-height: 1.8;
+            color: #4b5563;
+            font-size: 16px;
+        }
+        .explanation-content h2 {
+            color: #1f2937;
+            margin: 25px 0 15px 0;
+            font-size: 24px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        .explanation-content h3 {
+            color: #1f2937;
+            margin: 20px 0 15px 0;
+            font-size: 20px;
+        }
+        .explanation-content strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .explanation-content ul {
+            margin: 15px 0 15px 25px;
+        }
+        .explanation-content li {
+            margin-bottom: 10px;
+        }
+        .threat-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .threat-badge {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #dc2626;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid #fecaca;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="analysis-container">
+        <div class="modal-header">
+            <div class="modal-title">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span>🛡️</span>
+                    <h1>FraudFence Analysis</h1>
+                </div>
+                <div class="subtitle">Detailed Fraud Detection Results</div>
+            </div>
+        </div>
+        
+        <div class="modal-body">
+            <div class="status-banner">
+                <span class="status-icon">\${statusIcon}</span>
+                <div class="status-title">\${statusText}</div>
+                <div class="fraud-score">Fraud Risk Level: \${score}%</div>
+                <div class="fraud-meter">
+                    <div class="fraud-meter-fill"></div>
+                </div>
+                <div class="meter-labels">
+                    <span>Safe (0%)</span>
+                    <span>Moderate (50%)</span>
+                    <span>High Risk (100%)</span>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3 class="section-title">
+                    <span>📋</span>
+                    Detailed Analysis Report
+                </h3>
+                <div class="explanation-content">
+                    \${formattedExplanation}
+                </div>
+            </div>
+            
+            \${analysisData.threatTypes && analysisData.threatTypes.length > 0 ? \`
+                <div class="analysis-section">
+                    <h3 class="section-title">
+                        <span>⚠️</span>
+                        Detected Threat Categories
+                    </h3>
+                    <div class="threat-badges">
+                        \${analysisData.threatTypes.map(threat => \`<span class="threat-badge">\${threat}</span>\`).join('')}
+                    </div>
+                </div>
+            \` : ''}
+        </div>
+        
+        <div class="footer">
+            <p>Analysis provided by <a href="https://fraud-fence.vercel.app" target="_blank">FraudFence</a> - Advanced Fraud Detection System</p>
+        </div>
+    </div>
+</body>
+</html>\`;
+        }
+    </script>
+</body>
+</html>

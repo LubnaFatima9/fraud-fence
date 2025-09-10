@@ -475,7 +475,7 @@ function showHistoryItemDetails(item) {
                 <div class="detail-section">
                     <label>Result:</label>
                     <span class="history-status ${statusClass}">
-                        ${statusIcon} ${statusText} (${Math.round(confidence)}% confidence)
+                        ${statusIcon} ${statusText} (${Math.round(confidence)}% fraud risk)
                     </span>
                 </div>
                 <div class="detail-section">
@@ -825,20 +825,27 @@ function updateAnalysisDetails(details, pageUrl) {
  * Parse result data from API response
  */
 function parseResultData(data) {
-    const confidence = data.confidence || data.score || 0;
-    const isFraud = data.isFraud || data.fraud || confidence > 70;
+    // Handle confidence score - convert from 0-1 to 0-100 if needed
+    let confidence = data.confidenceScore || data.confidence || data.score || 0;
+    
+    // Convert decimal confidence (0-1) to percentage (0-100)
+    if (confidence <= 1 && confidence >= 0) {
+        confidence = confidence * 100;
+    }
+    
+    const isFraud = data.isFraudulent || data.isFraud || data.fraud || confidence > 70;
     
     // Determine risk level based on confidence
-    let riskLevel = 'safe';
+    let riskLevel = 'Low';
     if (confidence > 70) {
-        riskLevel = 'high';
+        riskLevel = 'High';
     } else if (confidence > 40) {
-        riskLevel = 'medium';
+        riskLevel = 'Medium';
     }
     
     return {
         isFraud,
-        confidence,
+        confidence: Math.round(confidence), // Ensure it's a whole number
         details: data.details || data.analysis || 'No additional details available.',
         riskLevel: data.riskLevel || riskLevel,
         threatTypes: data.threatTypes || data.threats || [],
@@ -1134,34 +1141,21 @@ async function checkForLatestContextResult() {
 }
 
 /**
- * Expand detailed analysis in the same popup
+ * Open detailed analysis in a new browser tab/window
  */
 function openDetailedAnalysis() {
     try {
-        console.log('🔍 Expanding detailed analysis...');
+        console.log('🔍 Opening detailed analysis in new tab...');
         
         if (!window.currentAnalysisData) {
             showNotification('No Data', 'Please run an analysis first before viewing details.');
             return;
         }
         
-        // Hide the main interface
-        document.querySelector('.container').style.display = 'none';
+        // Open analysis in new tab using chrome.tabs API
+        openAnalysisInNewTab(window.currentAnalysisData);
         
-        // Create or show detailed analysis view
-        let detailedView = document.getElementById('detailed-analysis-view');
-        if (!detailedView) {
-            detailedView = createDetailedAnalysisView();
-            document.body.appendChild(detailedView);
-        }
-        
-        // Populate with current analysis data
-        populateDetailedAnalysis(window.currentAnalysisData);
-        
-        // Show the detailed view
-        detailedView.style.display = 'block';
-        
-        console.log('✅ Detailed analysis expanded');
+        console.log('✅ Detailed analysis tab opened');
         
     } catch (error) {
         console.error('❌ Error opening detailed analysis:', error);
@@ -1170,85 +1164,700 @@ function openDetailedAnalysis() {
 }
 
 /**
- * Create detailed analysis view HTML
+ * Create full-screen modal for detailed analysis
  */
-function createDetailedAnalysisView() {
-    const detailedView = document.createElement('div');
-    detailedView.id = 'detailed-analysis-view';
-    detailedView.className = 'detailed-analysis-container';
+function createFullScreenAnalysisModal(analysisData) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('full-analysis-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
     
-    detailedView.innerHTML = `
-        <div class="detailed-header">
-            <button id="back-to-main" class="back-btn">← Back to Analysis</button>
-            <h2>Detailed Fraud Analysis</h2>
-            <button id="download-json" class="download-btn">📥 Download JSON</button>
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'full-analysis-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        z-index: 10000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+        animation: fadeIn 0.3s ease-out;
+    `;
+    
+    // Create modal content container
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        max-width: 900px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Parse analysis data
+    const { isFraud, confidence, riskLevel, details } = parseResultData(analysisData);
+    const score = confidence || 0;
+    const statusClass = isFraud ? 'fraud' : (confidence > 50 ? 'suspicious' : 'safe');
+    const statusIcon = isFraud ? '🚨' : (confidence > 50 ? '⚠️' : '✅');
+    const statusText = isFraud ? 'Fraudulent Content Detected' : (confidence > 50 ? 'Suspicious Content' : 'Content Appears Safe');
+    
+    modalContent.innerHTML = `
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from { transform: translateY(-50px) scale(0.95); opacity: 0; }
+                to { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            
+            .modal-header {
+                background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                color: white;
+                padding: 30px 40px;
+                border-radius: 20px 20px 0 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .modal-title {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .modal-title h2 {
+                font-size: 28px;
+                font-weight: 700;
+                margin: 0;
+            }
+            
+            .close-btn {
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+            
+            .close-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(1.1);
+            }
+            
+            .modal-body {
+                padding: 40px;
+            }
+            
+            .status-banner {
+                background: ${statusClass === 'fraud' ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 
+                           statusClass === 'suspicious' ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 
+                           'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'};
+                border: 2px solid ${statusClass === 'fraud' ? '#ef4444' : statusClass === 'suspicious' ? '#f59e0b' : '#10b981'};
+                border-radius: 15px;
+                padding: 25px;
+                margin-bottom: 30px;
+                text-align: center;
+            }
+            
+            .status-icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+                display: block;
+            }
+            
+            .status-title {
+                font-size: 24px;
+                font-weight: 700;
+                color: ${statusClass === 'fraud' ? '#dc2626' : statusClass === 'suspicious' ? '#d97706' : '#059669'};
+                margin-bottom: 10px;
+            }
+            
+            .confidence-score {
+                font-size: 20px;
+                font-weight: 600;
+                color: #374151;
+            }
+            
+            .analysis-section {
+                background: #f8fafc;
+                border-radius: 15px;
+                padding: 25px;
+                margin-bottom: 20px;
+                border-left: 4px solid #4f46e5;
+            }
+            
+            .section-title {
+                font-size: 20px;
+                font-weight: 700;
+                color: #374151;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .explanation-content {
+                line-height: 1.7;
+                color: #4b5563;
+                font-size: 16px;
+            }
+            
+            .explanation-content h2, .explanation-content h3 {
+                color: #1f2937;
+                margin: 20px 0 10px 0;
+            }
+            
+            .explanation-content h2 {
+                font-size: 22px;
+                border-bottom: 2px solid #e5e7eb;
+                padding-bottom: 8px;
+            }
+            
+            .explanation-content h3 {
+                font-size: 18px;
+            }
+            
+            .explanation-content strong {
+                font-weight: 700;
+                color: #1f2937;
+            }
+            
+            .explanation-content ul {
+                margin: 10px 0 10px 20px;
+            }
+            
+            .explanation-content li {
+                margin-bottom: 8px;
+            }
+            
+            .tech-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-top: 20px;
+            }
+            
+            .tech-item {
+                background: white;
+                padding: 15px;
+                border-radius: 10px;
+                border: 1px solid #e5e7eb;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .tech-label {
+                font-size: 14px;
+                color: #6b7280;
+                font-weight: 500;
+            }
+            
+            .tech-value {
+                font-size: 16px;
+                font-weight: 700;
+                color: #1f2937;
+            }
+            
+            .threat-badges {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 15px;
+            }
+            
+            .threat-badge {
+                background: #fee2e2;
+                color: #dc2626;
+                padding: 8px 16px;
+                border-radius: 25px;
+                font-weight: 600;
+                font-size: 14px;
+                border: 1px solid #fecaca;
+            }
+        </style>
+        
+        <div class="modal-header">
+            <div class="modal-title">
+                <span>🛡️</span>
+                <h2>Detailed Fraud Analysis</h2>
+            </div>
+            <button class="close-btn" id="close-modal">×</button>
         </div>
         
-        <div class="detailed-content">
-            <div class="fraud-meter-detailed">
-                <h3>Fraud Risk Assessment</h3>
-                <div class="meter-container">
-                    <div class="meter-score" id="detailed-score">0%</div>
-                    <div class="meter-bar">
-                        <div class="meter-fill" id="detailed-meter-fill"></div>
-                    </div>
-                    <div class="meter-labels">
-                        <span>Safe</span>
-                        <span>Suspicious</span>
-                        <span>Fraud</span>
-                    </div>
+        <div class="modal-body">
+            <div class="status-banner">
+                <span class="status-icon">${statusIcon}</span>
+                <div class="status-title">${statusText}</div>
+                <div class="confidence-score">Fraud Risk Level: ${Math.round(score)}%</div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3 class="section-title">
+                    <span>📋</span>
+                    Detailed Analysis
+                </h3>
+                <div class="explanation-content" id="modal-explanation">
+                    ${formatAnalysisExplanation(analysisData.explanation || 'No detailed explanation available.')}
                 </div>
             </div>
             
-            <div class="analysis-info" id="detailed-analysis-info">
-                <h3>Analysis Details</h3>
-                <div id="detailed-explanation"></div>
-            </div>
+            ${analysisData.threatTypes && analysisData.threatTypes.length > 0 ? `
+                <div class="analysis-section">
+                    <h3 class="section-title">
+                        <span>⚠️</span>
+                        Detected Threats
+                    </h3>
+                    <div class="threat-badges">
+                        ${analysisData.threatTypes.map(threat => `<span class="threat-badge">${threat}</span>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
             
-            <div class="threats-section" id="detailed-threats" style="display: none;">
-                <h3>Detected Threats</h3>
-                <div id="threat-badges"></div>
-            </div>
-            
-            <div class="technical-info">
-                <h3>Technical Information</h3>
+            <div class="analysis-section">
+                <h3 class="section-title">
+                    <span>🔧</span>
+                    Technical Information
+                </h3>
                 <div class="tech-grid">
                     <div class="tech-item">
-                        <span class="tech-label">Analysis Type:</span>
-                        <span class="tech-value" id="analysis-type-detail">-</span>
+                        <span class="tech-label">Analysis Type</span>
+                        <span class="tech-value">${analysisData.type || 'General'}</span>
                     </div>
                     <div class="tech-item">
-                        <span class="tech-label">Confidence Score:</span>
-                        <span class="tech-value" id="confidence-detail">-</span>
+                        <span class="tech-label">Risk Level</span>
+                        <span class="tech-value">${riskLevel}</span>
                     </div>
                     <div class="tech-item">
-                        <span class="tech-label">Risk Level:</span>
-                        <span class="tech-value" id="risk-level-detail">-</span>
+                        <span class="tech-label">Fraud Risk Score</span>
+                        <span class="tech-value">${Math.round(score)}%</span>
                     </div>
                     <div class="tech-item">
-                        <span class="tech-label">Analysis Time:</span>
-                        <span class="tech-value" id="analysis-time-detail">-</span>
+                        <span class="tech-label">Timestamp</span>
+                        <span class="tech-value">${new Date().toLocaleString()}</span>
                     </div>
                 </div>
             </div>
         </div>
     `;
     
-    // Add event listeners
-    setTimeout(() => {
-        document.getElementById('back-to-main')?.addEventListener('click', () => {
-            detailedView.style.display = 'none';
-            document.querySelector('.container').style.display = 'block';
-        });
-        
-        document.getElementById('download-json')?.addEventListener('click', downloadAnalysisJSON);
-    }, 100);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
     
-    return detailedView;
+    // Add close functionality
+    const closeBtn = modal.querySelector('#close-modal');
+    const closeModal = () => modal.remove();
+    
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // ESC key to close
+    document.addEventListener('keydown', function escapeClose(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escapeClose);
+        }
+    });
 }
 
 /**
- * Populate detailed analysis view with data
+ * Open analysis results in a new browser tab
+ */
+function openAnalysisInNewTab(analysisData) {
+    // Parse the analysis data
+    const { isFraud, confidence, riskLevel, details } = parseResultData(analysisData);
+    const score = confidence || 0;
+    const statusClass = isFraud ? 'fraud' : (confidence > 60 ? 'suspicious' : 'safe');
+    const statusIcon = isFraud ? '🚨' : (confidence > 60 ? '⚠️' : '✅');
+    const statusText = isFraud ? 'Fraudulent Content Detected' : (confidence > 60 ? 'Suspicious Content' : 'Content Appears Safe');
+    
+    // Create the HTML content for the new tab
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Analysis Results - FraudFence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #333;
+        }
+        
+        .analysis-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .modal-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .modal-title h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .modal-body {
+            padding: 40px;
+        }
+        
+        .status-banner {
+            background: ${statusClass === 'fraud' ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 
+                       statusClass === 'suspicious' ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 
+                       'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'};
+            border: 3px solid ${statusClass === 'fraud' ? '#ef4444' : statusClass === 'suspicious' ? '#f59e0b' : '#10b981'};
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .status-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .status-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: ${statusClass === 'fraud' ? '#dc2626' : statusClass === 'suspicious' ? '#d97706' : '#059669'};
+            margin-bottom: 15px;
+        }
+        
+        .fraud-score {
+            font-size: 24px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+        
+        .fraud-meter {
+            width: 100%;
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .fraud-meter-fill {
+            height: 100%;
+            background: ${statusClass === 'fraud' ? 'linear-gradient(90deg, #ef4444, #dc2626)' : 
+                        statusClass === 'suspicious' ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 
+                        'linear-gradient(90deg, #10b981, #059669)'};
+            width: ${score}%;
+            border-radius: 10px;
+            transition: width 1s ease-out;
+        }
+        
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .analysis-section {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4f46e5;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .explanation-content {
+            line-height: 1.8;
+            color: #4b5563;
+            font-size: 16px;
+        }
+        
+        .explanation-content h2, .explanation-content h3 {
+            color: #1f2937;
+            margin: 25px 0 15px 0;
+        }
+        
+        .explanation-content h2 {
+            font-size: 24px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        
+        .explanation-content h3 {
+            font-size: 20px;
+        }
+        
+        .explanation-content strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .explanation-content ul {
+            margin: 15px 0 15px 25px;
+        }
+        
+        .explanation-content li {
+            margin-bottom: 10px;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .tech-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tech-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .tech-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .threat-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .threat-badge {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #dc2626;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid #fecaca;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .footer a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="analysis-container">
+        <div class="modal-header">
+            <div class="modal-title">
+                <span>🛡️</span>
+                <h1>FraudFence Analysis</h1>
+            </div>
+            <div class="subtitle">Detailed Fraud Detection Results</div>
+        </div>
+        
+        <div class="modal-body">
+            <div class="status-banner">
+                <span class="status-icon">${statusIcon}</span>
+                <div class="status-title">${statusText}</div>
+                <div class="fraud-score">Fraud Risk Level: ${score}%</div>
+                <div class="fraud-meter">
+                    <div class="fraud-meter-fill"></div>
+                </div>
+                <div class="meter-labels">
+                    <span>Safe (0%)</span>
+                    <span>Moderate (50%)</span>
+                    <span>High Risk (100%)</span>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3 class="section-title">
+                    <span>📋</span>
+                    Detailed Analysis Report
+                </h3>
+                <div class="explanation-content">
+                    ${formatAnalysisExplanation(analysisData.explanation || 'No detailed explanation available.')}
+                </div>
+            </div>
+            
+            ${analysisData.threatTypes && analysisData.threatTypes.length > 0 ? `
+                <div class="analysis-section">
+                    <h3 class="section-title">
+                        <span>⚠️</span>
+                        Detected Threat Categories
+                    </h3>
+                    <div class="threat-badges">
+                        ${analysisData.threatTypes.map(threat => `<span class="threat-badge">${threat}</span>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            <div class="analysis-section">
+                <h3 class="section-title">
+                    <span>🔧</span>
+                    Technical Analysis Details
+                </h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <span class="tech-label">Analysis Type</span>
+                        <span class="tech-value">${analysisData.type || 'General'}</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">Risk Category</span>
+                        <span class="tech-value">${riskLevel}</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">Fraud Risk Score</span>
+                        <span class="tech-value">${score}%</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">Analysis Time</span>
+                        <span class="tech-value">${new Date().toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Analysis provided by <a href="https://fraud-fence.vercel.app" target="_blank">FraudFence</a> - Advanced Fraud Detection System</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    // Convert to data URL
+    const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+    
+    // Open in new tab
+    chrome.tabs.create({
+        url: dataUrl,
+        active: true
+    });
+}
+
+/**
+ * Format analysis explanation with proper HTML rendering
+ */
+function formatAnalysisExplanation(explanation) {
+    if (!explanation) return 'No detailed explanation available.';
+    
+    return explanation
+        // Convert markdown headers
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        // Convert bold text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // Convert bullet points
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        // Wrap consecutive list items in ul
+        .replace(/(<li>.*<\/li>\s*)+/gs, (match) => `<ul>${match}</ul>`)
+        // Convert line breaks
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^\s*/, '<p>')
+        .replace(/\s*$/, '</p>')
+        // Clean up empty paragraphs
+        .replace(/<p>\s*<\/p>/g, '')
+        .replace(/<p>\s*<h/g, '<h')
+        .replace(/h>\s*<\/p>/g, 'h>');
+}
+
+/**
+ * Populate detailed analysis view with data (legacy function - kept for compatibility)
  */
 function populateDetailedAnalysis(data) {
     try {
