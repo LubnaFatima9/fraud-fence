@@ -7,11 +7,11 @@
  * - tryWithFallback - A function that attempts to call a prompt with a primary model and falls back to a secondary model on failure.
  */
 
-import { AIGenerateAction, AIPromptAction } from 'genkit';
+import { PromptAction } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 
-const primaryModel = googleAI.model('gemini-1.5-flash-latest');
-const secondaryModel = googleAI.model('gemini-1.5-pro');
+const primaryModel = googleAI.model('gemini-pro');
+const secondaryModel = googleAI.model('gemini-pro');
 
 /**
  * Executes a Genkit prompt with a primary model, falling back to a secondary model if the primary fails.
@@ -22,12 +22,10 @@ const secondaryModel = googleAI.model('gemini-1.5-pro');
  * @returns The output of the prompt execution.
  * @throws An error if both the primary and secondary models fail.
  */
-export async function tryWithFallback<
-  I,
-  O,
-  S,
-  A extends AIGenerateAction<I, O> | AIPromptAction<I, O, S>
->(prompt: A, input: I): Promise<O | undefined> {
+export async function tryWithFallback<I, O>(
+  prompt: PromptAction<any>, 
+  input: I
+): Promise<O | undefined> {
   try {
     // Attempt with the primary (faster/cheaper) model first.
     const { output } = await prompt(input, { model: primaryModel });

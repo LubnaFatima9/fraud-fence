@@ -11,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { tryWithFallback } from './try-with-fallback';
+// import { tryWithFallback } from './try-with-fallback'; // Temporarily disabled due to model compatibility issues
 
 const AnalyzeTextForFraudInputSchema = z.object({
   text: z.string().describe('The text to analyze for potential fraud.'),
@@ -108,20 +108,20 @@ const analyzeTextForFraudFlow = ai.defineFlow(
   },
   async input => {
     // 1. Detect the language
-    const langOutput = await tryWithFallback(detectLanguagePrompt, { text: input.text });
-    const sourceLanguage = langOutput?.language || 'en';
+    const langResult = await detectLanguagePrompt({ text: input.text });
+    const sourceLanguage = langResult.output?.language || 'en';
 
     let textToAnalyze = input.text;
 
     // 2. Translate to English if necessary
     if (sourceLanguage !== 'en') {
-        const translationOutput = await tryWithFallback(translateTextPrompt, {
+        const translationResult = await translateTextPrompt({
             text: input.text,
             targetLanguage: 'English',
             sourceLanguage,
         });
-        if (translationOutput?.translatedText) {
-            textToAnalyze = translationOutput.translatedText;
+        if (translationResult.output?.translatedText) {
+            textToAnalyze = translationResult.output.translatedText;
         }
     }
     
@@ -146,11 +146,11 @@ const analyzeTextForFraudFlow = ai.defineFlow(
 
     if (!response.ok) {
         // Fallback to pure GenAI analysis if Cogniflow fails
-        const output = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
-        if (!output) {
+        const analysisResult = await fraudAnalysisPrompt({ text: textToAnalyze });
+        if (!analysisResult.output) {
             throw new Error("GenAI analysis failed to provide a response.");
         }
-        ({ isFraudulent, confidenceScore, explanation } = output);
+        ({ isFraudulent, confidenceScore, explanation } = analysisResult.output);
     } else {
         const result = await response.json();
         console.log('🧠 Cogniflow Text API Response:', result);
@@ -174,30 +174,30 @@ const analyzeTextForFraudFlow = ai.defineFlow(
         } else {
             console.warn('⚠️ Unexpected Cogniflow response format:', result);
             // Fallback to GenAI if response format is unexpected
-            const output = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
-            if (!output) {
+            const analysisResult = await fraudAnalysisPrompt({ text: textToAnalyze });
+            if (!analysisResult.output) {
                 throw new Error("Both Cogniflow and GenAI analysis failed.");
             }
-            ({ isFraudulent, confidenceScore, explanation } = output);
+            ({ isFraudulent, confidenceScore, explanation } = analysisResult.output);
         }
 
         // Get the generative explanation based on the original text
         if (!explanation) {
-            const explanationOutput = await tryWithFallback(fraudAnalysisPrompt, { text: textToAnalyze });
-            explanation = explanationOutput?.explanation || "Could not generate a detailed explanation. Please try again or contact support.";
+            const explanationResult = await fraudAnalysisPrompt({ text: textToAnalyze });
+            explanation = explanationResult.output?.explanation || "Could not generate a detailed explanation. Please try again or contact support.";
         }
     }
 
     // 4. Translate the explanation back to the source language if necessary
     let finalExplanation = explanation;
     if (sourceLanguage !== 'en') {
-        const finalTranslationOutput = await tryWithFallback(translateTextPrompt, {
+        const finalTranslationResult = await translateTextPrompt({
             text: explanation,
             targetLanguage: sourceLanguage,
             sourceLanguage: 'en',
         });
-        if (finalTranslationOutput?.translatedText) {
-            finalExplanation = finalTranslationOutput.translatedText;
+        if (finalTranslationResult.output?.translatedText) {
+            finalExplanation = finalTranslationResult.output.translatedText;
         }
     }
 
