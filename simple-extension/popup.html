@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    h1 {
+      margin: 0 0 15px 0;
+      font-size: 20px;
+      text-align: center;
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    #result {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      display: none;
+      word-wrap: break-word;
+    }
+    .safe {
+      background: rgba(46, 213, 115, 0.3);
+    }
+    .warning {
+      background: rgba(255, 193, 7, 0.3);
+    }
+    .danger {
+      background: rgba(255, 71, 87, 0.3);
+    }
+    .footer {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Fraud Fence</h1>
+  
+  <div class="input-group">
+    <textarea id="textInput" placeholder="Paste suspicious text, message, or URL here...&#10;&#10;Examples:&#10;• Phishing messages&#10;• Suspicious URLs&#10;• Scam emails"></textarea>
+  </div>
+  
+  <div id="result"></div>
+  
+  <div class="footer">
+    Select text/URL on any page → Click extension icon
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
