@@ -37,13 +37,15 @@ function analyzeText(text) {
   ];
   
   let fraudScore = 0;
-  let reasons = [];
+  let redFlags = [];
+  let greenFlags = [];
+  const maxScore = 150; // Maximum possible score for percentage calculation
   
   // Check keywords
   scamKeywords.forEach(keyword => {
     if (lowerText.includes(keyword)) {
       fraudScore += 10;
-      reasons.push(`Contains suspicious keyword: "${keyword}"`);
+      redFlags.push({ text: `Contains suspicious keyword: "${keyword}"`, weight: 10 });
     }
   });
   
@@ -51,34 +53,48 @@ function analyzeText(text) {
   suspiciousPatterns.forEach(pattern => {
     if (pattern.test(text)) {
       fraudScore += 20;
-      reasons.push('Contains suspicious URL pattern');
+      redFlags.push({ text: 'Contains suspicious URL pattern', weight: 20 });
     }
   });
   
   // Check for urgency and pressure tactics
   if (/within \d+ (hours?|minutes?|days?)/i.test(text)) {
     fraudScore += 15;
-    reasons.push('Creates false urgency with time limit');
+    redFlags.push({ text: 'Creates false urgency with time limit', weight: 15 });
   }
   
   // Check for "act now" or "limited time"
   if (/act now|limited time|hurry|expires soon|don't wait/i.test(text)) {
     fraudScore += 10;
-    reasons.push('Uses pressure tactics');
+    redFlags.push({ text: 'Uses pressure tactics', weight: 10 });
   }
   
   // Check for excessive punctuation (!!!, ???)
   if (/[!?]{3,}/.test(text)) {
     fraudScore += 8;
-    reasons.push('Excessive punctuation (pressure tactic)');
+    redFlags.push({ text: 'Excessive punctuation (pressure tactic)', weight: 8 });
   }
   
   // Check for ALL CAPS (yelling)
   const capsWords = text.match(/\b[A-Z]{4,}\b/g);
   if (capsWords && capsWords.length >= 2) {
     fraudScore += 8;
-    reasons.push('Excessive use of CAPITAL LETTERS');
+    redFlags.push({ text: 'Excessive use of CAPITAL LETTERS', weight: 8 });
   }
+  
+  // Add green flags for safe indicators
+  if (!redFlags.length) {
+    greenFlags.push({ text: 'No suspicious keywords detected' });
+  }
+  if (!/[!?]{3,}/.test(text)) {
+    greenFlags.push({ text: 'Normal punctuation usage' });
+  }
+  if (text.length > 50 && text.length < 500) {
+    greenFlags.push({ text: 'Reasonable message length' });
+  }
+  
+  // Calculate fraud percentage
+  const fraudPercentage = Math.min(100, Math.round((fraudScore / maxScore) * 100));
   
   // Determine risk level
   if (fraudScore >= 40) {
@@ -86,23 +102,30 @@ function analyzeText(text) {
       type: 'danger',
       emoji: '🚨',
       title: 'High Risk - Likely Scam',
-      message: 'This text contains multiple fraud indicators. Do NOT share personal information or send money.<br><br>' +
-               '<strong>Reasons:</strong><br>• ' + reasons.slice(0, 3).join('<br>• ')
+      percentage: fraudPercentage,
+      message: 'This text contains multiple fraud indicators. Do NOT share personal information or send money.',
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   } else if (fraudScore >= 20) {
     return {
       type: 'warning',
       emoji: '⚠️',
       title: 'Medium Risk - Be Cautious',
-      message: 'This text has some suspicious elements. Verify through official channels before taking action.<br><br>' +
-               '<strong>Warnings:</strong><br>• ' + reasons.slice(0, 2).join('<br>• ')
+      percentage: fraudPercentage,
+      message: 'This text has some suspicious elements. Verify through official channels before taking action.',
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   } else {
     return {
       type: 'safe',
       emoji: '✅',
       title: 'Low Risk',
-      message: 'No major fraud indicators detected. Always verify requests through official channels.'
+      percentage: fraudPercentage,
+      message: 'No major fraud indicators detected. Always verify requests through official channels.',
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   }
 }
@@ -110,7 +133,9 @@ function analyzeText(text) {
 // URL fraud detection logic
 function analyzeURL(url) {
   let fraudScore = 0;
-  let reasons = [];
+  let redFlags = [];
+  let greenFlags = [];
+  const maxScore = 200; // Maximum possible score for percentage calculation
   
   try {
     const urlObj = new URL(url);
@@ -120,76 +145,92 @@ function analyzeURL(url) {
     // 1. Check for IP address instead of domain
     if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(domain)) {
       fraudScore += 30;
-      reasons.push('🔴 Uses IP address instead of domain name (common in phishing)');
+      redFlags.push({ text: 'Uses IP address instead of domain name (common in phishing)', weight: 30 });
+    } else {
+      greenFlags.push({ text: 'Uses proper domain name' });
     }
     
     // 2. Check for suspicious TLDs (top-level domains)
     const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.work', '.club', '.live', '.online'];
     if (suspiciousTLDs.some(tld => domain.endsWith(tld))) {
       fraudScore += 25;
-      reasons.push('🔴 Uses suspicious free domain extension');
+      redFlags.push({ text: 'Uses suspicious free domain extension', weight: 25 });
+    } else {
+      greenFlags.push({ text: 'Uses standard domain extension' });
     }
     
     // 3. Check for URL shorteners
     const shorteners = ['bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly', 'is.gd', 'buff.ly', 'adf.ly'];
     if (shorteners.some(shortener => domain.includes(shortener))) {
       fraudScore += 20;
-      reasons.push('⚠️ URL shortener detected (hides real destination)');
+      redFlags.push({ text: 'URL shortener detected (hides real destination)', weight: 20 });
+    } else {
+      greenFlags.push({ text: 'Full URL visible (not shortened)' });
     }
     
     // 4. Check for excessive subdomains
     const subdomains = domain.split('.');
     if (subdomains.length > 4) {
       fraudScore += 15;
-      reasons.push('⚠️ Excessive subdomains (obfuscation technique)');
+      redFlags.push({ text: 'Excessive subdomains (obfuscation technique)', weight: 15 });
     }
     
     // 5. Check for suspicious keywords in URL
     const suspiciousKeywords = ['verify', 'account', 'secure', 'login', 'signin', 'update', 'confirm', 'banking', 'paypal', 'apple', 'amazon', 'microsoft', 'wallet', 'bitcoin'];
     const foundKeywords = suspiciousKeywords.filter(keyword => fullURL.includes(keyword));
     if (foundKeywords.length > 0 && !isLegitDomain(domain)) {
-      fraudScore += 15 * foundKeywords.length;
-      reasons.push(`🔴 Contains suspicious keywords: ${foundKeywords.join(', ')}`);
+      const weight = 15 * foundKeywords.length;
+      fraudScore += weight;
+      redFlags.push({ text: `Contains suspicious keywords: ${foundKeywords.join(', ')}`, weight: weight });
     }
     
     // 6. Check for misspelled popular domains
     const legitDomains = ['google.com', 'facebook.com', 'paypal.com', 'amazon.com', 'microsoft.com', 'apple.com', 'netflix.com', 'instagram.com', 'twitter.com', 'linkedin.com'];
+    let isTyposquatting = false;
     legitDomains.forEach(legitDomain => {
       if (isSimilarDomain(domain, legitDomain) && domain !== legitDomain) {
         fraudScore += 40;
-        reasons.push(`🔴 Typosquatting: Impersonates ${legitDomain}`);
+        redFlags.push({ text: `Typosquatting: Impersonates ${legitDomain}`, weight: 40 });
+        isTyposquatting = true;
       }
     });
+    if (!isTyposquatting && isLegitDomain(domain)) {
+      greenFlags.push({ text: 'Legitimate known domain' });
+    }
     
     // 7. Check for HTTPS (lack of it is suspicious)
     if (urlObj.protocol === 'http:') {
       fraudScore += 10;
-      reasons.push('⚠️ Not using HTTPS (insecure connection)');
+      redFlags.push({ text: 'Not using HTTPS (insecure connection)', weight: 10 });
+    } else {
+      greenFlags.push({ text: 'Uses secure HTTPS connection' });
     }
     
     // 8. Check for @ symbol in URL (credential hiding)
     if (fullURL.includes('@')) {
       fraudScore += 35;
-      reasons.push('🔴 Contains @ symbol (credential phishing technique)');
+      redFlags.push({ text: 'Contains @ symbol (credential phishing technique)', weight: 35 });
     }
     
     // 9. Check for excessive hyphens
     const hyphenCount = domain.split('-').length - 1;
     if (hyphenCount > 3) {
       fraudScore += 10;
-      reasons.push('⚠️ Excessive hyphens in domain');
+      redFlags.push({ text: 'Excessive hyphens in domain', weight: 10 });
     }
     
     // 10. Check for long domain names (over 30 chars)
     if (domain.length > 30) {
       fraudScore += 8;
-      reasons.push('⚠️ Unusually long domain name');
+      redFlags.push({ text: 'Unusually long domain name', weight: 8 });
+    } else if (domain.length < 20) {
+      greenFlags.push({ text: 'Normal domain length' });
     }
     
     // 11. Check URL path for suspicious patterns
     if (/\/(login|signin|verify|account|secure|update|confirm)/i.test(urlObj.pathname)) {
       fraudScore += 10;
-      reasons.push('⚠️ Suspicious path (login/verify page)');
+      redFlags.push({ text: 'Suspicious path (login/verify page)', weight: 10 });
     }
     
   } catch (error) {
@@ -197,9 +238,15 @@ function analyzeURL(url) {
       type: 'danger',
       emoji: '❌',
       title: 'Invalid URL',
-      message: 'The URL format is invalid. Please check and try again.'
+      percentage: 0,
+      message: 'The URL format is invalid. Please check and try again.',
+      redFlags: [{ text: 'Malformed URL structure', weight: 0 }],
+      greenFlags: []
     };
   }
+  
+  // Calculate fraud percentage
+  const fraudPercentage = Math.min(100, Math.round((fraudScore / maxScore) * 100));
   
   // Determine risk level
   if (fraudScore >= 50) {
@@ -207,35 +254,44 @@ function analyzeURL(url) {
       type: 'danger',
       emoji: '🚨',
       title: 'HIGH RISK URL - Likely Phishing',
-      message: 'This URL shows multiple fraud indicators. DO NOT click or enter any information.<br><br>' +
-               '<strong>Threats Detected:</strong><br>• ' + reasons.slice(0, 4).join('<br>• ') +
-               '<br><br><strong>Domain:</strong> ' + extractDomain(url)
+      percentage: fraudPercentage,
+      message: 'This URL shows multiple fraud indicators. DO NOT click or enter any information.',
+      domain: extractDomain(url),
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   } else if (fraudScore >= 25) {
     return {
       type: 'warning',
       emoji: '⚠️',
       title: 'MEDIUM RISK URL - Verify Before Clicking',
-      message: 'This URL has suspicious characteristics. Verify it\'s legitimate before proceeding.<br><br>' +
-               '<strong>Warnings:</strong><br>• ' + reasons.slice(0, 3).join('<br>• ') +
-               '<br><br><strong>Domain:</strong> ' + extractDomain(url)
+      percentage: fraudPercentage,
+      message: 'This URL has suspicious characteristics. Verify it\'s legitimate before proceeding.',
+      domain: extractDomain(url),
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   } else if (fraudScore > 0) {
     return {
       type: 'warning',
       emoji: '⚠️',
       title: 'LOW RISK URL - Minor Concerns',
-      message: 'Some minor concerns detected. Always verify URLs before entering sensitive data.<br><br>' +
-               '<strong>Notes:</strong><br>• ' + reasons.join('<br>• ') +
-               '<br><br><strong>Domain:</strong> ' + extractDomain(url)
+      percentage: fraudPercentage,
+      message: 'Some minor concerns detected. Always verify URLs before entering sensitive data.',
+      domain: extractDomain(url),
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   } else {
     return {
       type: 'safe',
       emoji: '✅',
       title: 'URL Appears Safe',
-      message: 'No major fraud indicators detected in this URL. However, always verify legitimacy before entering sensitive information.<br><br>' +
-               '<strong>Domain:</strong> ' + extractDomain(url)
+      percentage: fraudPercentage,
+      message: 'No major fraud indicators detected in this URL. However, always verify legitimacy before entering sensitive information.',
+      domain: extractDomain(url),
+      redFlags: redFlags,
+      greenFlags: greenFlags
     };
   }
 }
@@ -301,14 +357,60 @@ function extractDomain(url) {
   }
 }
 
-// Function to display results
+// Function to display results with detailed flags
 function displayResult(result) {
   const resultDiv = document.getElementById('result');
   resultDiv.style.display = 'block';
   resultDiv.className = result.type;
+  
+  // Build red flags HTML
+  let redFlagsHTML = '';
+  if (result.redFlags && result.redFlags.length > 0) {
+    redFlagsHTML = '<div style="margin-top: 12px;"><strong style="color: #e74c3c;">🚩 Red Flags Detected:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
+    result.redFlags.forEach(flag => {
+      redFlagsHTML += `<li style="margin: 4px 0; color: #c0392b;"><span style="font-weight: 500;">${flag.text}</span> ${flag.weight ? `<span style="font-size: 0.85em; color: #e74c3c;">(Risk: +${flag.weight})</span>` : ''}</li>`;
+    });
+    redFlagsHTML += '</ul></div>';
+  }
+  
+  // Build green flags HTML
+  let greenFlagsHTML = '';
+  if (result.greenFlags && result.greenFlags.length > 0) {
+    greenFlagsHTML = '<div style="margin-top: 12px;"><strong style="color: #27ae60;">✅ Safe Indicators:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
+    result.greenFlags.forEach(flag => {
+      greenFlagsHTML += `<li style="margin: 4px 0; color: #229954;">${flag.text}</li>`;
+    });
+    greenFlagsHTML += '</ul></div>';
+  }
+  
+  // Build domain info if available
+  let domainHTML = '';
+  if (result.domain) {
+    domainHTML = `<div style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px;"><strong>Domain:</strong> <code style="font-family: monospace; font-size: 0.9em;">${result.domain}</code></div>`;
+  }
+  
+  // Build percentage display
+  let percentageHTML = '';
+  if (result.percentage !== undefined) {
+    const percentageColor = result.percentage >= 50 ? '#e74c3c' : (result.percentage >= 25 ? '#f39c12' : '#27ae60');
+    percentageHTML = `
+      <div style="margin: 15px 0; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px; text-align: center;">
+        <div style="font-size: 0.9em; color: #555; margin-bottom: 5px;">Fraud Risk Level</div>
+        <div style="font-size: 2em; font-weight: bold; color: ${percentageColor};">${result.percentage}%</div>
+        <div style="margin-top: 8px; background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="width: ${result.percentage}%; height: 100%; background: ${percentageColor}; transition: width 0.5s ease;"></div>
+        </div>
+      </div>
+    `;
+  }
+  
   resultDiv.innerHTML = `
-    <strong>${result.emoji} ${result.title}</strong><br>
-    ${result.message}
+    <strong style="font-size: 1.1em;">${result.emoji} ${result.title}</strong>
+    ${percentageHTML}
+    <p style="margin: 10px 0;">${result.message}</p>
+    ${domainHTML}
+    ${redFlagsHTML}
+    ${greenFlagsHTML}
   `;
 }
 
