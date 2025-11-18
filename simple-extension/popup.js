@@ -581,7 +581,6 @@ function parseMarkdownToHTML(text) {
 async function autoAnalyze(text) {
   const resultDiv = document.getElementById('result');
   const loadingDiv = document.getElementById('loading');
-  const analyzeBtn = document.getElementById('analyzeBtn');
   
   if (!text) {
     resultDiv.classList.remove('show');
@@ -594,7 +593,6 @@ async function autoAnalyze(text) {
   resultDiv.classList.remove('show');
   resultDiv.style.display = 'none';
   loadingDiv.style.display = 'block';
-  if (analyzeBtn) analyzeBtn.disabled = true;
   
   try {
     const result = await analyzeTextWithAI(text);
@@ -620,27 +618,51 @@ async function autoAnalyze(text) {
         <p><strong>Error:</strong> ${error.message}</p>
       </div>
     `;
-  } finally {
-    if (analyzeBtn) analyzeBtn.disabled = false;
   }
 }
 
 // Listen for button clicks and text input
 document.addEventListener('DOMContentLoaded', () => {
   const textInput = document.getElementById('textInput');
-  const analyzeBtn = document.getElementById('analyzeBtn');
   const clearBtn = document.getElementById('clearBtn');
   const resultDiv = document.getElementById('result');
   
-  // Analyze button click
-  if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', () => {
+  let typingTimer;
+  const typingDelay = 1500; // 1.5 seconds after user stops typing
+  
+  // Auto-analyze when user types
+  if (textInput) {
+    textInput.addEventListener('input', () => {
+      clearTimeout(typingTimer);
       const text = textInput.value.trim();
-      if (text) {
-        autoAnalyze(text);
-      } else {
-        alert('Please enter some text or URL to analyze.');
+      
+      // Clear results if text is too short
+      if (text.length < 10) {
+        resultDiv.classList.remove('show');
+        resultDiv.style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
+        return;
       }
+      
+      // Show a subtle hint that analysis will start
+      const loadingDiv = document.getElementById('loading');
+      loadingDiv.style.display = 'none';
+      
+      // Start analysis after user stops typing
+      typingTimer = setTimeout(() => {
+        autoAnalyze(text);
+      }, typingDelay);
+    });
+    
+    // Instant analysis on paste
+    textInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        const text = textInput.value.trim();
+        if (text.length >= 10) {
+          clearTimeout(typingTimer);
+          autoAnalyze(text);
+        }
+      }, 100);
     });
   }
   
@@ -651,20 +673,8 @@ document.addEventListener('DOMContentLoaded', () => {
       resultDiv.classList.remove('show');
       resultDiv.style.display = 'none';
       document.getElementById('loading').style.display = 'none';
+      clearTimeout(typingTimer);
       textInput.focus();
-    });
-  }
-  
-  // Enter key to analyze
-  if (textInput) {
-    textInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        const text = textInput.value.trim();
-        if (text) {
-          autoAnalyze(text);
-        }
-      }
     });
   }
 });
