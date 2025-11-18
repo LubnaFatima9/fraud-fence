@@ -582,7 +582,10 @@ async function autoAnalyze(text) {
   const resultDiv = document.getElementById('result');
   const loadingDiv = document.getElementById('loading');
   
+  console.log('autoAnalyze called with text:', text?.substring(0, 50) + '...');
+  
   if (!text) {
+    console.log('No text to analyze');
     resultDiv.classList.remove('show');
     resultDiv.style.display = 'none';
     loadingDiv.style.display = 'none';
@@ -590,12 +593,15 @@ async function autoAnalyze(text) {
   }
   
   // Show loading state
+  console.log('Showing loading state...');
   resultDiv.classList.remove('show');
   resultDiv.style.display = 'none';
   loadingDiv.style.display = 'block';
   
   try {
+    console.log('Calling analyzeTextWithAI...');
     const result = await analyzeTextWithAI(text);
+    console.log('Analysis result received:', result);
     displayResult(result);
   } catch (error) {
     console.error('Analysis error:', error);
@@ -623,6 +629,8 @@ async function autoAnalyze(text) {
 
 // Listen for button clicks and text input
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('Popup loaded, initializing...');
+  
   const textInput = document.getElementById('textInput');
   const clearBtn = document.getElementById('clearBtn');
   const resultDiv = document.getElementById('result');
@@ -644,12 +652,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
-      // Show a subtle hint that analysis will start
-      const loadingDiv = document.getElementById('loading');
-      loadingDiv.style.display = 'none';
-      
       // Start analysis after user stops typing
       typingTimer = setTimeout(() => {
+        console.log('Auto-analyzing after typing stopped...');
         autoAnalyze(text);
       }, typingDelay);
     });
@@ -660,6 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = textInput.value.trim();
         if (text.length >= 10) {
           clearTimeout(typingTimer);
+          console.log('Auto-analyzing pasted text...');
           autoAnalyze(text);
         }
       }, 100);
@@ -677,6 +683,10 @@ document.addEventListener('DOMContentLoaded', () => {
       textInput.focus();
     });
   }
+  
+  // Load selected text if available
+  console.log('Checking for selected text...');
+  loadSelectedText();
 });
 
 // Function to get selected text from the current page
@@ -741,10 +751,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ received: true });
   }
   return true;
-});
-
-// Load selected text when popup opens
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('Popup loaded, checking for selected text...');
-  loadSelectedText();
 });
