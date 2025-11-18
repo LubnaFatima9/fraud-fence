@@ -2,88 +2,417 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      width: 350px;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-    h1 {
-      margin: 0 0 15px 0;
-      font-size: 20px;
-      text-align: center;
-    }
-    .input-group {
-      margin-bottom: 15px;
-    }
-    textarea {
-      width: 100%;
-      min-height: 80px;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 14px;
-      resize: vertical;
+    * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: white;
-      color: #667eea;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s;
+
+    body {
+      width: 450px;
+      max-height: 600px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #1a1a1a;
+      overflow-x: hidden;
     }
-    button:hover {
-      transform: scale(1.05);
-    }
-    button:active {
-      transform: scale(0.95);
-    }
-    #result {
-      margin-top: 15px;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 5px;
-      display: none;
-      word-wrap: break-word;
-    }
-    .safe {
-      background: rgba(46, 213, 115, 0.3);
-    }
-    .warning {
-      background: rgba(255, 193, 7, 0.3);
-    }
-    .danger {
-      background: rgba(255, 71, 87, 0.3);
-    }
-    .footer {
-      margin-top: 15px;
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 16px 20px;
       text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #667eea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .subtitle {
       font-size: 12px;
-      opacity: 0.8;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .input-section {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.3s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    textarea::placeholder {
+      color: #999;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .clear-btn {
+      background: #f5f5f5;
+      color: #666;
+      box-shadow: none;
+    }
+
+    .clear-btn:hover {
+      background: #e0e0e0;
+    }
+
+    /* Loading Spinner */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Result Section */
+    #result {
+      display: none;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    #result.show {
+      display: block;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f0f0f0;
+      margin-bottom: 16px;
+    }
+
+    .result-icon {
+      font-size: 32px;
+    }
+
+    .result-title {
+      flex: 1;
+    }
+
+    .result-title h3 {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .result-title .confidence {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge.api {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .badge.fallback {
+      background: #fff3e0;
+      color: #f57c00;
+    }
+
+    /* Status Styles */
+    .result-header.danger {
+      border-bottom-color: #ff4757;
+    }
+
+    .result-header.danger .result-title h3 {
+      color: #ff4757;
+    }
+
+    .result-header.warning {
+      border-bottom-color: #ffa502;
+    }
+
+    .result-header.warning .result-title h3 {
+      color: #ffa502;
+    }
+
+    .result-header.safe {
+      border-bottom-color: #2ed573;
+    }
+
+    .result-header.safe .result-title h3 {
+      color: #2ed573;
+    }
+
+    /* Threat Types */
+    .threat-types {
+      margin-bottom: 16px;
+    }
+
+    .threat-types h4 {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .threat-tag {
+      display: inline-block;
+      padding: 5px 12px;
+      margin: 4px 4px 4px 0;
+      background: #fff5f5;
+      color: #e53e3e;
+      border: 1px solid #feb2b2;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Explanation */
+    .explanation {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #444;
+    }
+
+    .explanation h2 {
+      font-size: 16px;
+      color: #333;
+      margin: 16px 0 8px 0;
+    }
+
+    .explanation h3 {
+      font-size: 14px;
+      color: #555;
+      margin: 12px 0 6px 0;
+    }
+
+    .explanation ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .explanation li {
+      margin: 6px 0;
+    }
+
+    .explanation strong {
+      color: #333;
+    }
+
+    .explanation code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Scrollbar */
+    #result::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #result::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    #result::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 4px;
+    }
+
+    #result::-webkit-scrollbar-thumb:hover {
+      background: #5568d3;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 8px;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .quick-action {
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 6px;
+      font-size: 11px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .quick-action:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.6;
     }
   </style>
 </head>
 <body>
-  <h1>🛡️ Fraud Fence</h1>
-  
-  <div class="input-group">
-    <textarea id="textInput" placeholder="Paste suspicious text, message, or URL here...&#10;&#10;Examples:&#10;• Phishing messages&#10;• Suspicious URLs&#10;• Scam emails"></textarea>
+  <div class="header">
+    <h1>🛡️ Fraud Fence</h1>
+    <div class="subtitle">AI-Powered Fraud Detection</div>
   </div>
   
-  <div id="result"></div>
+  <div class="content">
+    <div class="input-section">
+      <textarea 
+        id="textInput" 
+        placeholder="Paste suspicious text, message, or URL here...
+
+Examples:
+• Email messages
+• Text messages
+• Website URLs
+• Social media posts"
+      ></textarea>
+      <div class="button-group">
+        <button id="analyzeBtn">🔍 Analyze</button>
+        <button id="clearBtn" class="clear-btn">Clear</button>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div style="color: white; font-size: 14px;">Analyzing...</div>
+    </div>
+    
+    <div id="result"></div>
+  </div>
   
   <div class="footer">
-    Select text/URL on page → Click icon for instant analysis
+    <div class="footer-text">💡 Tip: Select text on any webpage, then click the extension icon</div>
+    <div class="quick-actions">
+      <a href="http://localhost:9005" target="_blank" class="quick-action">🌐 Open Website</a>
+      <a href="http://localhost:9005/guides" target="_blank" class="quick-action">📚 Safety Guide</a>
+    </div>
   </div>
 
+  <script src="config.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -44,21 +44,11 @@ async function analyzeTextWithAI(text) {
     return {
       type: result.isFraudulent ? 'danger' : (confidenceScore >= 30 ? 'warning' : 'safe'),
       emoji: result.isFraudulent ? '🚨' : (confidenceScore >= 30 ? '⚠️' : '✅'),
-      title: result.isFraudulent ? 'High Risk - Likely Scam' : 
+      title: result.isFraudulent ? 'High Risk - Likely Fraud' : 
              (confidenceScore >= 30 ? 'Medium Risk - Be Cautious' : 'Low Risk - Appears Safe'),
       percentage: confidenceScore,
       message: result.explanation || result.message || 'Analysis complete',
-      redFlags: (result.indicators || result.details || [])
-        .filter(item => item.toLowerCase().includes('suspicious') || 
-                       item.toLowerCase().includes('risk') ||
-                       item.toLowerCase().includes('phishing') ||
-                       item.toLowerCase().includes('scam'))
-        .map(flag => ({ text: flag, weight: 0 })),
-      greenFlags: (result.indicators || result.details || [])
-        .filter(item => item.toLowerCase().includes('legitimate') || 
-                       item.toLowerCase().includes('safe') ||
-                       item.toLowerCase().includes('secure'))
-        .map(flag => ({ text: flag })),
+      threatTypes: result.threatTypes || [],
       apiPowered: true,
       reasoning: result.reasoning || result.explanation
     };
@@ -227,27 +217,12 @@ async function analyzeURLWithAI(url) {
     return {
       type: result.isFraudulent ? 'danger' : (confidenceScore >= 30 ? 'warning' : 'safe'),
       emoji: result.isFraudulent ? '🚨' : (confidenceScore >= 30 ? '⚠️' : '✅'),
-      title: result.isFraudulent ? 'HIGH RISK URL - Likely Phishing' : 
-             (confidenceScore >= 30 ? 'MEDIUM RISK URL - Verify Before Clicking' : 'URL Appears Safe'),
+      title: result.isFraudulent ? 'High Risk URL - Likely Malicious' : 
+             (confidenceScore >= 30 ? 'Medium Risk URL - Verify Before Clicking' : 'URL Appears Safe'),
       percentage: confidenceScore,
       message: result.explanation || result.message || 'URL analysis complete',
       domain: extractDomain(url),
-      redFlags: (result.indicators || result.threatTypes || result.details || [])
-        .filter(item => typeof item === 'string' && (
-          item.toLowerCase().includes('suspicious') || 
-          item.toLowerCase().includes('risk') ||
-          item.toLowerCase().includes('phishing') ||
-          item.toLowerCase().includes('malicious')
-        ))
-        .map(flag => ({ text: flag, weight: 0 })),
-      greenFlags: (result.indicators || result.details || [])
-        .filter(item => typeof item === 'string' && (
-          item.toLowerCase().includes('legitimate') || 
-          item.toLowerCase().includes('safe') ||
-          item.toLowerCase().includes('secure') ||
-          item.toLowerCase().includes('trusted')
-        ))
-        .map(flag => ({ text: flag })),
+      threatTypes: result.threatTypes || [],
       apiPowered: true,
       reasoning: result.reasoning || result.explanation
     };
@@ -495,103 +470,203 @@ function extractDomain(url) {
 // Function to display results with detailed flags
 function displayResult(result) {
   const resultDiv = document.getElementById('result');
-  resultDiv.style.display = 'block';
-  resultDiv.className = result.type;
+  const loadingDiv = document.getElementById('loading');
   
-  // Build red flags HTML
-  let redFlagsHTML = '';
-  if (result.redFlags && result.redFlags.length > 0) {
-    redFlagsHTML = '<div style="margin-top: 12px;"><strong style="color: #e74c3c;">🚩 Red Flags Detected:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
-    result.redFlags.forEach(flag => {
-      redFlagsHTML += `<li style="margin: 4px 0; color: #c0392b;"><span style="font-weight: 500;">${flag.text}</span> ${flag.weight ? `<span style="font-size: 0.85em; color: #e74c3c;">(Risk: +${flag.weight})</span>` : ''}</li>`;
-    });
-    redFlagsHTML += '</ul></div>';
+  // Hide loading
+  loadingDiv.style.display = 'none';
+  
+  // Show result with animation
+  resultDiv.classList.add('show');
+  
+  // Determine status class
+  const statusClass = result.type === 'danger' ? 'danger' : 
+                      result.type === 'warning' ? 'warning' : 'safe';
+  
+  // Extract threat types from the result
+  let threatTypes = [];
+  if (result.threatTypes && Array.isArray(result.threatTypes)) {
+    threatTypes = result.threatTypes;
+  } else if (result.redFlags && result.redFlags.length > 0) {
+    threatTypes = result.redFlags.map(flag => flag.text);
   }
   
-  // Build green flags HTML
-  let greenFlagsHTML = '';
-  if (result.greenFlags && result.greenFlags.length > 0) {
-    greenFlagsHTML = '<div style="margin-top: 12px;"><strong style="color: #27ae60;">✅ Safe Indicators:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
-    result.greenFlags.forEach(flag => {
-      greenFlagsHTML += `<li style="margin: 4px 0; color: #229954;">${flag.text}</li>`;
-    });
-    greenFlagsHTML += '</ul></div>';
-  }
-  
-  // Build domain info if available
-  let domainHTML = '';
-  if (result.domain) {
-    domainHTML = `<div style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px;"><strong>Domain:</strong> <code style="font-family: monospace; font-size: 0.9em;">${result.domain}</code></div>`;
-  }
-  
-  // Build percentage display
-  let percentageHTML = '';
-  if (result.percentage !== undefined) {
-    const percentageColor = result.percentage >= 50 ? '#e74c3c' : (result.percentage >= 25 ? '#f39c12' : '#27ae60');
-    percentageHTML = `
-      <div style="margin: 15px 0; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px; text-align: center;">
-        <div style="font-size: 0.9em; color: #555; margin-bottom: 5px;">Fraud Risk Level</div>
-        <div style="font-size: 2em; font-weight: bold; color: ${percentageColor};">${result.percentage}%</div>
-        <div style="margin-top: 8px; background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
-          <div style="width: ${result.percentage}%; height: 100%; background: ${percentageColor}; transition: width 0.5s ease;"></div>
-        </div>
+  // Build threat types HTML
+  let threatTypesHTML = '';
+  if (threatTypes.length > 0) {
+    threatTypesHTML = `
+      <div class="threat-types">
+        <h4>⚠️ Detected Threat Types:</h4>
+        ${threatTypes.map(threat => `<span class="threat-tag">${threat}</span>`).join('')}
       </div>
     `;
   }
   
+  // Build percentage/confidence display
+  let confidenceHTML = '';
+  if (result.percentage !== undefined) {
+    confidenceHTML = `
+      <span class="confidence">
+        Confidence: <strong>${result.percentage}%</strong>
+      </span>
+    `;
+  }
+  
+  // Build badge HTML
+  let badgeHTML = '';
+  if (result.apiPowered) {
+    badgeHTML = '<span class="badge api">🌐 AI Powered</span>';
+  } else {
+    badgeHTML = '<span class="badge fallback">🔍 Rule Based</span>';
+  }
+  
+  // Parse markdown-style explanation to HTML
+  let explanationHTML = parseMarkdownToHTML(result.message || result.reasoning || result.explanation || 'Analysis complete.');
+  
+  // Build the full result HTML
   resultDiv.innerHTML = `
-    <strong style="font-size: 1.1em;">${result.emoji} ${result.title}</strong>
-    ${percentageHTML}
-    <p style="margin: 10px 0;">${result.message}</p>
-    ${domainHTML}
-    ${redFlagsHTML}
-    ${greenFlagsHTML}
-    ${result.apiPowered ? '<div style="margin-top: 10px; padding: 6px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 4px; font-size: 0.85em; text-align: center;">🌐 Website API Analysis</div>' : ''}
+    <div class="result-header ${statusClass}">
+      <div class="result-icon">${result.emoji}</div>
+      <div class="result-title">
+        <h3>${result.title}</h3>
+        ${confidenceHTML}
+      </div>
+      ${badgeHTML}
+    </div>
+    
+    ${threatTypesHTML}
+    
+    <div class="explanation">
+      ${explanationHTML}
+    </div>
   `;
+}
+
+// Parse markdown-style text to HTML
+function parseMarkdownToHTML(text) {
+  if (!text) return '';
+  
+  let html = text;
+  
+  // Convert markdown headers
+  html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+  
+  // Convert bold text
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Convert lists
+  html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*?<\/li>\n?)+/gs, '<ul>$&</ul>');
+  
+  // Convert line breaks
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  
+  // Wrap in paragraph if not already wrapped
+  if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<p>')) {
+    html = '<p>' + html + '</p>';
+  }
+  
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<p>\s*<br>\s*<\/p>/g, '');
+  
+  // Convert inline code
+  html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+  
+  return html;
 }
 
 // Function to analyze text automatically with AI
 async function autoAnalyze(text) {
   const resultDiv = document.getElementById('result');
+  const loadingDiv = document.getElementById('loading');
+  const analyzeBtn = document.getElementById('analyzeBtn');
   
   if (!text) {
-    resultDiv.style.display = 'block';
-    resultDiv.className = 'warning';
-    resultDiv.innerHTML = '⚠️ No text to analyze. Select text on any page and click the extension icon.';
+    resultDiv.classList.remove('show');
+    resultDiv.style.display = 'none';
+    loadingDiv.style.display = 'none';
     return;
   }
   
-  // Show loading with API indicator
-  resultDiv.style.display = 'block';
-  resultDiv.className = '';
-  resultDiv.innerHTML = '🔍 Analyzing with Website API...<br><small style="opacity: 0.7;">Connecting to fraud detection server...</small>';
+  // Show loading state
+  resultDiv.classList.remove('show');
+  resultDiv.style.display = 'none';
+  loadingDiv.style.display = 'block';
+  if (analyzeBtn) analyzeBtn.disabled = true;
   
-  // Analyze with AI
   try {
     const result = await analyzeTextWithAI(text);
     displayResult(result);
   } catch (error) {
     console.error('Analysis error:', error);
-    resultDiv.className = 'danger';
-    resultDiv.innerHTML = '❌ Analysis failed. Please check your internet connection or API key.';
+    loadingDiv.style.display = 'none';
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+      <div class="result-header danger">
+        <div class="result-icon">❌</div>
+        <div class="result-title">
+          <h3>Analysis Failed</h3>
+        </div>
+      </div>
+      <div class="explanation">
+        <p>Unable to analyze content. Please check:</p>
+        <ul>
+          <li>Website is running at <code>http://localhost:9005</code></li>
+          <li>Internet connection is active</li>
+          <li>Browser extensions are not blocking requests</li>
+        </ul>
+        <p><strong>Error:</strong> ${error.message}</p>
+      </div>
+    `;
+  } finally {
+    if (analyzeBtn) analyzeBtn.disabled = false;
   }
 }
 
-// Listen for text input changes (for manual typing)
+// Listen for button clicks and text input
 document.addEventListener('DOMContentLoaded', () => {
   const textInput = document.getElementById('textInput');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const resultDiv = document.getElementById('result');
   
-  // Auto-analyze when user stops typing for 1 second
-  let typingTimer;
-  textInput.addEventListener('input', () => {
-    clearTimeout(typingTimer);
-    const text = textInput.value.trim();
-    if (text.length > 10) {
-      typingTimer = setTimeout(() => {
+  // Analyze button click
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', () => {
+      const text = textInput.value.trim();
+      if (text) {
         autoAnalyze(text);
-      }, 1000);
-    }
-  });
+      } else {
+        alert('Please enter some text or URL to analyze.');
+      }
+    });
+  }
+  
+  // Clear button click
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      textInput.value = '';
+      resultDiv.classList.remove('show');
+      resultDiv.style.display = 'none';
+      document.getElementById('loading').style.display = 'none';
+      textInput.focus();
+    });
+  }
+  
+  // Enter key to analyze
+  if (textInput) {
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        const text = textInput.value.trim();
+        if (text) {
+          autoAnalyze(text);
+        }
+      }
+    });
+  }
 });
 
 // Function to get selected text from the current page
