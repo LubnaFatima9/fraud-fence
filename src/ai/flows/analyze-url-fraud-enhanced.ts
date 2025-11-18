@@ -332,25 +332,105 @@ function generateComprehensiveUrlExplanation(isFraudulent: boolean, confidence: 
 }
 
 export async function analyzeUrlForFraud(input: AnalyzeUrlForFraudInput): Promise<AnalyzeUrlForFraudOutput> {
-  console.log('🔍 Starting comprehensive URL fraud analysis...');
+  console.log('🔍 Starting AI-powered URL fraud analysis...');
   
   try {
-    const result = comprehensiveUrlAnalysis(input.url);
-    console.log('✅ Comprehensive URL analysis completed:', {
+    // Import ai for Gemini API
+    const {ai} = await import('@/ai/genkit');
+    
+    const aiAnalysisFlow = ai.defineFlow(
+      {
+        name: 'analyzeUrlForFraud',
+        inputSchema: AnalyzeUrlForFraudInputSchema,
+        outputSchema: AnalyzeUrlForFraudOutputSchema,
+      },
+      async (input) => {
+        const prompt = `You are an expert cybersecurity analyst specializing in malicious URL detection, phishing websites, and online fraud.
+
+Analyze the following URL and determine if it's potentially dangerous, fraudulent, or used for phishing/scam purposes.
+
+URL TO ANALYZE:
+"""
+${input.url}
+"""
+
+URL FRAUD DETECTION CRITERIA:
+
+**HIGH-RISK INDICATORS:**
+1. **Brand Impersonation**: Typosquatting (paypa1.com, amaz0n.com, microsft.com)
+2. **Suspicious TLDs**: .tk, .ml, .ga, .cf, .ru, .cn, .xyz (high fraud rates)
+3. **IP Addresses**: Using raw IP addresses instead of domain names
+4. **URL Shorteners**: bit.ly, tinyurl.com (hides real destination)
+5. **Homograph Attacks**: Using similar-looking characters (paypal vs рaypal)
+6. **Suspicious Subdomains**: secure-paypal.scamsite.com, login-amazon.fake.tk
+7. **HTTP on Sensitive Pages**: No HTTPS for login/payment pages
+8. **Phishing Keywords**: verify, secure, login, update, suspend in unusual contexts
+9. **Excessive Hyphens/Numbers**: my-secure-bank-login-2024-verify.com
+
+**LEGITIMATE INDICATORS:**
+- Well-known domains (.com, .org, .edu from recognized entities)
+- HTTPS with valid certificates
+- Clean, professional URL structure
+- Matches expected domain for the brand
+
+**IMPORTANT ANALYSIS RULES:**
+- **Context is Critical**: A legitimate company can have "secure" or "login" in their URLs
+- **Domain Authority**: Consider if the root domain is trustworthy
+- **Avoid False Positives**: Don't flag legitimate websites just because they use URL shorteners
+- **Confidence Scoring**: Only high confidence (>0.8) for obvious phishing/malware domains
+
+LEGITIMATE EXAMPLES (should score LOW):
+- https://login.microsoft.com/oauth2/authorize
+- https://accounts.google.com/signin
+- https://www.paypal.com/us/signin
+- https://secure.chase.com/web/auth/
+
+FRAUD EXAMPLES (should score HIGH):
+- http://paypa1-secure-login.tk/verify
+- http://192.168.1.1/amazon-refund
+- http://micros0ft-support.ml/fix-virus
+- https://secure-account-verify.xyz/google
+
+Provide your analysis in the following JSON format:
+{
+  "isFraudulent": boolean,
+  "confidenceScore": number (0.0 to 1.0),
+  "explanation": "Detailed markdown explanation with specific indicators",
+  "threatTypes": ["Type1", "Type2", ...]
+}
+
+Be ACCURATE and MINIMIZE FALSE POSITIVES. Consider domain reputation carefully.`;
+
+        const result = await ai.generate({
+          model: 'googleai/gemini-2.0-flash-exp',
+          prompt,
+          output: {
+            schema: AnalyzeUrlForFraudOutputSchema,
+          },
+        });
+
+        return result.output!;
+      }
+    );
+
+    const result = await aiAnalysisFlow(input);
+    
+    console.log('✅ AI URL analysis completed:', {
       isFraudulent: result.isFraudulent,
       confidence: result.confidenceScore,
       threatCount: result.threatTypes.length
     });
+    
     return result;
     
   } catch (error) {
-    console.error('❌ URL analysis failed:', error);
+    console.error('❌ AI URL analysis failed, using fallback:', error);
     
+    // Fallback to rule-based if AI fails
+    const fallbackResult = comprehensiveUrlAnalysis(input.url);
     return {
-      isFraudulent: false,
-      confidenceScore: 0.5,
-      explanation: "**Analysis Unavailable**\n\nUnable to analyze URL at this time. Please try again later.\n\n**General Safety Tips:**\n- Verify URLs before clicking\n- Look for HTTPS encryption\n- Be cautious of suspicious domains\n- Navigate to websites directly when possible",
-      threatTypes: []
+      ...fallbackResult,
+      explanation: "⚠️ **AI Analysis Unavailable** - Using Fallback Detection\n\n" + fallbackResult.explanation
     };
   }
 }

@@ -269,26 +269,93 @@ function generateDetailedExplanation(isFraudulent: boolean, confidence: number, 
 }
 
 export async function analyzeTextForFraud(input: AnalyzeTextForFraudInput): Promise<AnalyzeTextForFraudOutput> {
-  console.log('🔍 Starting enhanced text fraud analysis...');
+  console.log('🔍 Starting AI-powered text fraud analysis...');
   
   try {
-    // Use the enhanced rule-based analysis
-    const result = enhancedRuleBasedAnalysis(input.text);
-    console.log('✅ Enhanced analysis completed:', {
+    // Try AI-powered analysis first
+    const aiAnalysisFlow = ai.defineFlow(
+      {
+        name: 'analyzeTextForFraud',
+        inputSchema: AnalyzeTextForFraudInputSchema,
+        outputSchema: AnalyzeTextForFraudOutputSchema,
+      },
+      async (input) => {
+        const prompt = `You are an expert cybersecurity fraud analyst with deep knowledge of scams, phishing, social engineering, and online fraud patterns.
+
+Analyze the following text and determine if it contains fraudulent content, scam attempts, phishing, or social engineering tactics.
+
+TEXT TO ANALYZE:
+"""
+${input.text}
+"""
+
+FRAUD DETECTION CRITERIA:
+1. **Phishing Attempts**: Requests for credentials, password resets, account verification
+2. **Financial Scams**: Unexpected money requests, investment schemes, lottery/prize scams
+3. **Romance Scams**: Emotional manipulation, money requests in relationships
+4. **Tech Support Scams**: Fake virus warnings, unsolicited tech support offers
+5. **Impersonation**: Fake government agencies, authority figures, companies
+6. **Urgency Tactics**: "Act now", "Limited time", "Account will be closed"
+7. **Social Engineering**: Manipulative language, fear tactics, greed appeals
+8. **Business Email Compromise**: Fake invoices, urgent wire transfers, CEO fraud
+
+IMPORTANT ANALYSIS RULES:
+- **Context Matters**: Words like "urgent", "verify", "payment" are NORMAL in legitimate business communications
+- **Consider the full message**: Is this a genuine business email or a scam attempt?
+- **Look for RED FLAGS**: Typosquatting domains, grammar errors, suspicious requests, emotional manipulation
+- **Avoid False Positives**: Don't flag normal business correspondence just because it mentions payments or urgency
+- **Confidence Scoring**: Be confident (>0.8) only when clear fraud indicators exist
+
+LEGITIMATE EXAMPLES (should score LOW):
+- "Your invoice for last month is attached. Please process payment by the 15th."
+- "Urgent: Please review the quarterly report before tomorrow's meeting."
+- "We need to verify your shipping address for the order you placed."
+
+FRAUD EXAMPLES (should score HIGH):
+- "URGENT! Your account has been suspended! Click here to verify immediately or lose access!"
+- "Congratulations! You've won $1,000,000! Send $500 processing fee to claim your prize!"
+- "I'm the CEO. Wire $50,000 to this account immediately. Don't tell anyone."
+
+Provide your analysis in the following JSON format:
+{
+  "isFraudulent": boolean,
+  "confidenceScore": number (0.0 to 1.0),
+  "explanation": "Detailed markdown explanation with specific indicators",
+  "threatTypes": ["Type1", "Type2", ...]
+}
+
+Be ACCURATE and AVOID FALSE POSITIVES. Consider business context carefully.`;
+
+        const result = await ai.generate({
+          model: 'googleai/gemini-2.0-flash-exp',
+          prompt,
+          output: {
+            schema: AnalyzeTextForFraudOutputSchema,
+          },
+        });
+
+        return result.output!;
+      }
+    );
+
+    const result = await aiAnalysisFlow(input);
+    
+    console.log('✅ AI analysis completed:', {
       isFraudulent: result.isFraudulent,
       confidence: result.confidenceScore,
       threatCount: result.threatTypes.length
     });
+    
     return result;
     
   } catch (error) {
-    console.error('❌ Enhanced analysis failed:', error);
+    console.error('❌ AI analysis failed, using fallback:', error);
     
+    // Fallback to rule-based if AI fails
+    const fallbackResult = enhancedRuleBasedAnalysis(input.text);
     return {
-      isFraudulent: false,
-      confidenceScore: 0.5,
-      explanation: "**Analysis Unavailable**\n\nUnable to analyze content at this time. Please try again later.\n\n**General Safety Tips:**\n- Be cautious of urgent requests for personal information\n- Verify sender identity through official channels\n- Trust your instincts - if something seems suspicious, it probably is",
-      threatTypes: []
+      ...fallbackResult,
+      explanation: "⚠️ **AI Analysis Unavailable** - Using Fallback Detection\n\n" + fallbackResult.explanation
     };
   }
 }
